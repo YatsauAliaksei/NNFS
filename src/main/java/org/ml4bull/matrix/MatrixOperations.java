@@ -1,5 +1,7 @@
 package org.ml4bull.matrix;
 
+import com.sun.istack.internal.NotNull;
+
 import java.util.stream.DoubleStream;
 
 public interface MatrixOperations {
@@ -8,7 +10,7 @@ public interface MatrixOperations {
 
     double[][] transpose(double[] matrix);
 
-    void multiply(double[][] matrix, double k);
+    void scalarMultiply(double[][] matrix, double k);
 
     default void printMatrix(double[][] matrix) {
         for (double[] m : matrix) {
@@ -20,6 +22,14 @@ public interface MatrixOperations {
     default void printMatrix(double[] matrix) {
         DoubleStream.of(matrix).forEach(System.out::println);
     }
+
+    /**
+     * Matrix multiplication. {@param matrix1, matrix2} should be same length.
+     * @param matrix1
+     * @param matrix2
+     * @return
+     */
+    double multiply(@NotNull double[] matrix1, @NotNull double[] matrix2);
 
     double[][] multiply(double[][] matrix1, double[][] matrix2);
 }
