@@ -22,6 +22,7 @@ public class MatrixOperationsSimpleTest {
 
         System.out.println();
         mo.printMatrix(transpose);
+        System.out.println();
 
         double[][] t = {
                 {1, 4},
@@ -45,7 +46,19 @@ public class MatrixOperationsSimpleTest {
         };
 
         double[][] multiply = mo.multiply(m, t);
+        System.out.println();
         mo.printMatrix(multiply);
+        System.out.println();
         assertThat(Arrays.deepEquals(multiply, new double[][]{{17, 32}, {32, 77}}));
+    }
+
+    @Test
+    public void testMultiplyVector() {
+        double[] v = {1, 2, 3};
+        mo.printMatrix(v);
+        double[][] transpose = mo.transpose(v);
+        System.out.println();
+        mo.printMatrix(transpose);
+        System.out.println();
     }
 }

@@ -1,8 +1,5 @@
 package org.ml4bull.matrix;
 
-/**
- * Created by AYatsev.
- */
 public interface DoubleIterator {
 
     default void iterate(double[][] t) {

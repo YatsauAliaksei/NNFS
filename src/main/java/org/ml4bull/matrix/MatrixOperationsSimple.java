@@ -12,6 +12,14 @@ public class MatrixOperationsSimple implements MatrixOperations {
     }
 
     @Override
+    public double[][] transpose(double[] matrix) {
+        double[][] transM = new double[1][matrix.length];
+        System.arraycopy(matrix, 0, transM[0], 0, matrix.length);
+
+        return transM;
+    }
+
+    @Override
     public void multiply(double[][] matrix, double k) {
         ((DoubleIterator) (l, e) -> matrix[l][e] *= k).iterate(matrix);
     }
