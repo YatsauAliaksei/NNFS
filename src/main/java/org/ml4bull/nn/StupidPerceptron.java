@@ -26,11 +26,13 @@ public class StupidPerceptron implements Perceptron {
         this.hiddenLayers = new ArrayList<>();
     }
 
+    @Override
     public StupidPerceptron addHiddenLayer(NeuronLayer hiddenLayer) {
         hiddenLayers.add(hiddenLayer);
         return this;
     }
 
+    @Override
     public double[][] test(DataSet dataSet, Printer printer) {
         double[][] result = new double[dataSet.getInput().length][];
         for (int i = 0; i < dataSet.getInput().length; i++) {
@@ -53,6 +55,7 @@ public class StupidPerceptron implements Perceptron {
         return v;
     }
 
+    @Override
     public double train(DataSet dataSet) {
         return train(dataSet.getInput(), dataSet.getOutput());
     }
@@ -62,6 +65,7 @@ public class StupidPerceptron implements Perceptron {
      * @param expected
      * @return error.
      */
+    @Override
     public double train(double[][] data, double[][] expected) {
         double error = 0;
         MatrixOperations mo = Factory.getMatrixOperations();
@@ -133,10 +137,10 @@ public class StupidPerceptron implements Perceptron {
                 errorH = currentError;
             }
             hiddenLayers.remove(outputLayer);
-            mo.roundMatrix(calcY, 0.5);
+            mo.roundMatrix(calcY, 0.5); // for error calculation. todo: cost function
 
             if (!Arrays.equals(calcY, expected[i]))
-                error++;
+                error++; // Very naive implementation. Should be changed to cost function. todo
         }
 
         hiddenLayers.add(outputLayer);
