@@ -53,15 +53,54 @@ public class MatrixOperationsSimple implements MatrixOperations {
         return result;
     }
 
+    /**
+     * @param matrix1 - T matrix
+     * @param matrix2
+     * @return
+     */
+    @Override
+    public double[] multiplySingleDim(double[][] matrix1, double[] matrix2) {
+        if (matrix1[0].length != matrix2.length)
+            throw new IllegalArgumentException("Row number of first matrix should be equal to column number of second matrix.");
+
+        double[] result = new double[matrix1.length];
+
+        for (int i = 0; i < result.length; i++) {
+            for (int l = 0; l < matrix1[i].length; l++) {
+                result[i] += matrix1[i][l] * matrix2[l];
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public void roundMatrix(double[] matrix, double threshold) {
+        for (int i = 0; i < matrix.length; i++) {
+            matrix[i] = matrix[i] >= threshold ? 1 : 0;
+        }
+    }
+
+    @Override
     public void addition(double[][] matrix, double value) {
         ((DoubleIterator) (l, e) -> matrix[l][e] += value).iterate(matrix);
     }
 
+    @Override
     public double[][] getFullIdentityMatrix(int column, int row) {
         double[][] matrix = new double[row][column];
 
         ((DoubleIterator) (l, e) -> matrix[l][e] = 1).iterate(matrix);
 
         return matrix;
+    }
+
+    @Override
+    public double[][] sum(double[][] delta, double[][] tmpE) {
+        if (delta == null) return tmpE;
+
+        ((DoubleIterator) (l, e) -> delta[l][e] += tmpE[l][e]).iterate(delta);
+
+        return delta;
     }
 }

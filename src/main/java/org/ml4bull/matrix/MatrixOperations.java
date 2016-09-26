@@ -32,4 +32,14 @@ public interface MatrixOperations {
     double multiply(@NotNull double[] matrix1, @NotNull double[] matrix2);
 
     double[][] multiply(double[][] matrix1, double[][] matrix2);
+
+    double[] multiplySingleDim(double[][] matrix1, double[] matrix2);
+
+    void roundMatrix(double[] matrix, double threshold);
+
+    void addition(double[][] matrix, double value);
+
+    double[][] getFullIdentityMatrix(int column, int row);
+
+    double[][] sum(double[][] delta, double[][] tmpE);
 }
