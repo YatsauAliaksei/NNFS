@@ -11,24 +11,26 @@ import org.ml4bull.util.Factory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
     private final NeuronLayer inputLayer;
     private final NeuronLayer outputLayer;
-    private final List<NeuronLayer> hiddenLayers;
-    private double[][] hlLastResult;
+    private final List<NeuronLayer> perceptronLayers;
+    private double[][] lastResults;
 
-    public MultiLayerPerceptron(int input, int output, ActivationFunction af) {
+    public MultiLayerPerceptron(int input, int output, ActivationFunction outputLayerActivationFunction) {
         this.inputLayer = new InputNeuronLayer(input);
-        this.outputLayer = new OutputNeuronLayer(output, af);
-        this.hiddenLayers = new ArrayList<>();
+        this.outputLayer = new OutputNeuronLayer(output, outputLayerActivationFunction);
+        this.perceptronLayers = new ArrayList<>();
+        this.perceptronLayers.add(outputLayer);
     }
 
     @Override
     public MultiLayerPerceptron addHiddenLayer(NeuronLayer hiddenLayer) {
-        hiddenLayers.add(hiddenLayer);
+        perceptronLayers.add(perceptronLayers.size() - 1, hiddenLayer);
         return this;
     }
 
@@ -44,14 +46,15 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
     @Override
     public double[] process(double[] data) {
-        hlLastResult = new double[hiddenLayers.size()][];
+        lastResults = new double[perceptronLayers.size() + 1][];
 
         double[] v = inputLayer.forwardPropagation(data);
-        for (int i = 0; i < hiddenLayers.size(); i++) {
-            v = hiddenLayers.get(i).forwardPropagation(v);
-            hlLastResult[i] = v;
+        lastResults[0] = v;
+
+        for (int i = 0; i < perceptronLayers.size(); i++) {
+            lastResults[i] = v;
+            v = perceptronLayers.get(i).forwardPropagation(v);
         }
-        v = outputLayer.forwardPropagation(v);
         return v;
     }
 
@@ -70,39 +73,31 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         double error = 0;
         MatrixOperations mo = Factory.getMatrixOperations();
 
-        double[][][] deltas = new double[hiddenLayers.size() + 1][][]; // layer/neuron/theta
+        double[][][] deltas = new double[perceptronLayers.size()][][]; // layer/neuron/theta
 
         for (int i = 0; i < data.length; i++) {
             // predict
             double[] calcY = process(data[i]);
-            // calculate out error i.e. back propagation.
+            // calculate out error start point for back propagation.
             double[] errorOut = new double[expected[i].length];
             for (int j = 0; j < expected[i].length; j++) {
                 errorOut[j] = calcY[j] - expected[i][j];
             }
 
-            hiddenLayers.add(outputLayer); // added after process method invocation. Probably should be improved.
-            double[] errorH = errorOut;
-
             // Back propagation for hidden layers
-            for (int layer = 0; layer < hiddenLayers.size(); layer++) {
-                int index = hiddenLayers.size() - 1 - layer;
-                NeuronLayer neuronLayer = hiddenLayers.get(index);
+            ArrayList<NeuronLayer> revList = new ArrayList<>(perceptronLayers);
+            Collections.reverse(revList);
 
-                double[] previousA;
-                if (index == 0) {
-                    previousA = data[i];
-                } else {
-                    previousA = hlLastResult[index - 1];
-                }
+            for (int layer = 0; layer < revList.size(); layer++) {
+                int index = revList.size() - 1 - layer;
 
                 // compute current weight error
-                double[][] dl = new double[errorH.length][previousA.length + 1]; // neuron/theta
+                double[][] dl = new double[errorOut.length][lastResults[index].length + 1]; // neuron/theta
 
                 for (int l = 0; l < dl.length; l++) {
-                    dl[l][0] = errorH[l];
+                    dl[l][0] = errorOut[l];
                     for (int e = 1; e < dl[l].length; e++) {
-                        dl[l][e] = errorH[l] * previousA[e - 1];
+                        dl[l][e] = errorOut[l] * lastResults[index][e - 1];
                     }
                 }
 
@@ -112,20 +107,18 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
                 //********************************************************************************************
                 // Compute next error
-                errorH = neuronLayer.backPropagation(errorH);
+                errorOut = revList.get(layer).backPropagation(errorOut);
             }
-            hiddenLayers.remove(outputLayer);
+
             mo.roundMatrix(calcY, 0.5); // for error calculation. todo: cost function
 
             if (!Arrays.equals(calcY, expected[i]))
                 error++; // Very naive implementation. Should be changed to cost function. todo
         }
 
-        hiddenLayers.add(outputLayer);
-
         for (int l = 0; l < deltas.length; l++) {
             for (int n = 0; n < deltas[l].length; n++) {
-                Neuron neuron = hiddenLayers.get(l).getNeurons().get(n);
+                Neuron neuron = perceptronLayers.get(l).getNeurons().get(n);
                 double[] weights = neuron.getWeights();
 
                 for (int w = 0; w < deltas[l][n].length; w++) {
@@ -134,8 +127,6 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
                 }
             }
         }
-
-        hiddenLayers.remove(outputLayer);
 
         return error / expected.length;
     }
