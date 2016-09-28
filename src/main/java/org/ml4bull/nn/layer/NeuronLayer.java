@@ -7,5 +7,7 @@ import java.util.List;
 public interface NeuronLayer {
     double[] forwardPropagation(double[] inValues);
 
+    double[] backPropagation(double[] previousError);
+
     List<Neuron> getNeurons();
 }

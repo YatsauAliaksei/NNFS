@@ -4,8 +4,8 @@ import org.ml4bull.nn.data.DataSet;
 import org.ml4bull.nn.data.Printer;
 import org.ml4bull.nn.layer.NeuronLayer;
 
-public interface Perceptron {
-    StupidPerceptron addHiddenLayer(NeuronLayer hiddenLayer);
+public interface SupervisedNeuralNetwork {
+    MultiLayerPerceptron addHiddenLayer(NeuronLayer hiddenLayer);
 
     double[][] test(DataSet dataSet, Printer printer);
 

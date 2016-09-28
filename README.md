@@ -1,2 +1,2 @@
 # NNFS
-Neural network first sample
+Neural network first stage

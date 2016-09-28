@@ -17,6 +17,11 @@ public class InputNeuronLayer implements NeuronLayer {
     }
 
     @Override
+    public double[] backPropagation(double[] previousError) {
+        return new double[0];
+    }
+
+    @Override
     public List<Neuron> getNeurons() {
         return null;
     }

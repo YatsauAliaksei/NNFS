@@ -3,7 +3,7 @@ package org.ml4bull.quiz;
 import org.junit.Test;
 import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.StepFunction;
-import org.ml4bull.nn.StupidPerceptron;
+import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
 import org.ml4bull.nn.layer.HiddenNeuronLayer;
 
@@ -18,7 +18,7 @@ public class FizzBuzzNN {
     public void main() {
         FizzBuzzNN fb = new FizzBuzzNN();
         SigmoidFunction af = new SigmoidFunction();
-        StupidPerceptron sp = new StupidPerceptron(2, 4, af);
+        MultiLayerPerceptron sp = new MultiLayerPerceptron(2, 4, af);
         sp.addHiddenLayer(new HiddenNeuronLayer(2, af));
 
         DataSet trainSet = fb.getTrainSet();

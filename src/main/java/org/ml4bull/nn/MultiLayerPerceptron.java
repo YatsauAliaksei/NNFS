@@ -13,21 +13,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class StupidPerceptron implements Perceptron {
+public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
     private final NeuronLayer inputLayer;
     private final NeuronLayer outputLayer;
     private final List<NeuronLayer> hiddenLayers;
     private double[][] hlLastResult;
 
-    public StupidPerceptron(int input, int output, ActivationFunction af) {
+    public MultiLayerPerceptron(int input, int output, ActivationFunction af) {
         this.inputLayer = new InputNeuronLayer(input);
         this.outputLayer = new OutputNeuronLayer(output, af);
         this.hiddenLayers = new ArrayList<>();
     }
 
     @Override
-    public StupidPerceptron addHiddenLayer(NeuronLayer hiddenLayer) {
+    public MultiLayerPerceptron addHiddenLayer(NeuronLayer hiddenLayer) {
         hiddenLayers.add(hiddenLayer);
         return this;
     }
@@ -81,15 +81,13 @@ public class StupidPerceptron implements Perceptron {
                 errorOut[j] = calcY[j] - expected[i][j];
             }
 
-            hiddenLayers.add(outputLayer);
+            hiddenLayers.add(outputLayer); // added after process method invocation. Probably should be improved.
             double[] errorH = errorOut;
 
             // Back propagation for hidden layers
             for (int layer = 0; layer < hiddenLayers.size(); layer++) {
                 int index = hiddenLayers.size() - 1 - layer;
                 NeuronLayer neuronLayer = hiddenLayers.get(index);
-                List<Neuron> neurons = neuronLayer.getNeurons();
-
 
                 double[] previousA;
                 if (index == 0) {
@@ -99,13 +97,12 @@ public class StupidPerceptron implements Perceptron {
                 }
 
                 // compute current weight error
-                double[] f = errorH;
-                double[][] dl = new double[f.length][previousA.length + 1]; // neuron/theta
+                double[][] dl = new double[errorH.length][previousA.length + 1]; // neuron/theta
 
                 for (int l = 0; l < dl.length; l++) {
-                    dl[l][0] = f[l];
+                    dl[l][0] = errorH[l];
                     for (int e = 1; e < dl[l].length; e++) {
-                        dl[l][e] = f[l] * previousA[e - 1];
+                        dl[l][e] = errorH[l] * previousA[e - 1];
                     }
                 }
 
@@ -115,26 +112,7 @@ public class StupidPerceptron implements Perceptron {
 
                 //********************************************************************************************
                 // Compute next error
-                // get weights
-                double[][] theta = new double[neurons.size()][];
-                for (int s = 0; s < neurons.size(); s++) {
-                    double[] weights = neurons.get(s).getWeights();
-                    theta[s] = Arrays.copyOfRange(weights, 1, weights.length);
-                }
-
-                // calculating next layer error
-                double[][] thetaT = mo.transpose(theta);
-                double[] e = mo.multiplySingleDim(thetaT, errorH);
-                double[] a = new double[hlLastResult[index - 1].length];
-                double[] currentError = new double[e.length];
-
-                for (int s = 0; s < a.length; s++)
-                    a[s] = (1 - hlLastResult[index - 1][s]) * hlLastResult[index - 1][s];
-
-                for (int d = 0; d < currentError.length; d++)
-                    currentError[d] = e[d] * a[d];
-
-                errorH = currentError;
+                errorH = neuronLayer.backPropagation(errorH);
             }
             hiddenLayers.remove(outputLayer);
             mo.roundMatrix(calcY, 0.5); // for error calculation. todo: cost function
