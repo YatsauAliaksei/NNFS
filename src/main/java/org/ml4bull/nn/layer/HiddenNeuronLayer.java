@@ -29,12 +29,13 @@ public class HiddenNeuronLayer implements NeuronLayer {
         b[0] = 1;
         System.arraycopy(lastInput, 0, b, 1, lastInput.length);
 
-        lastResult = new double[neurons.size()];
+        double[] rawResults = new double[neurons.size()];
         for (int i = 0; i < neurons.size(); i++) {
             Neuron n = neurons.get(i);
             n.setFeatures(b);
-            lastResult[i] = compute(n);
+            rawResults[i] = n.calculate();
         }
+        lastResult = activationFunction.activate(rawResults);
         return lastResult;
     }
 
@@ -65,10 +66,5 @@ public class HiddenNeuronLayer implements NeuronLayer {
     @Override
     public List<Neuron> getNeurons() {
         return neurons;
-    }
-
-    private double compute(Neuron neuron) {
-        double value = neuron.calculate();
-        return activationFunction.activate(value);
     }
 }

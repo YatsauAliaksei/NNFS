@@ -20,13 +20,11 @@ public class StepFunction implements ActivationFunction {
             return 0;
     }
 
-    public double[] activate(double[] value) {
-        double[] r = new double[value.length];
-        for (int i = 0; i < value.length; i++) {
-            if (value[i] >= threshold) {
-                r[i] = 1;
-            } else
-                r[i] = 0;
+    @Override
+    public double[] activate(double[] layerOutput) {
+        double[] r = new double[layerOutput.length];
+        for (int i = 0; i < layerOutput.length; i++) {
+            r[i] = activate(layerOutput[i]);
         }
         return r;
     }

@@ -85,7 +85,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
             }
 
             // Back propagation for hidden layers
-            ArrayList<NeuronLayer> revList = new ArrayList<>(perceptronLayers);
+            List<NeuronLayer> revList = new ArrayList<>(perceptronLayers);
             Collections.reverse(revList);
 
             for (int layer = 0; layer < revList.size(); layer++) {
