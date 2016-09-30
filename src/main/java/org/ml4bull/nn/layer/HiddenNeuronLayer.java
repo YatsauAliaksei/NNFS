@@ -12,7 +12,7 @@ import java.util.List;
 public class HiddenNeuronLayer implements NeuronLayer {
     private List<Neuron> neurons;
     private ActivationFunction activationFunction;
-    private double[] lastResult;
+    protected double[] lastResult;
     private double[] lastInput;
 
     public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction) {
@@ -41,6 +41,8 @@ public class HiddenNeuronLayer implements NeuronLayer {
 
     @Override
     public double[] backPropagation(double[] previousError) {
+        calculateWeightsError(previousError);
+
         double[][] theta = new double[neurons.size()][];
         MatrixOperations mo = Factory.getMatrixOperations();
         for (int s = 0; s < neurons.size(); s++) {
@@ -61,6 +63,22 @@ public class HiddenNeuronLayer implements NeuronLayer {
             currentError[d] = e[d] * a[d];
 
         return currentError;
+    }
+
+    protected void calculateWeightsError(double[] error) {
+        for (int i = 0; i < neurons.size(); i++) {
+            Neuron neuron = neurons.get(i);
+            double[] we = new double[neuron.getWeights().length];
+            we[0] = error[i];
+            for (int t = 1; t < we.length; t++) {
+                we[t] = error[i] * lastInput[t - 1];
+            }
+            neuron.addWeightsError(we);
+        }
+    }
+
+    public void resetErrorWeights() {
+        neurons.forEach(neuron -> resetErrorWeights());
     }
 
     @Override

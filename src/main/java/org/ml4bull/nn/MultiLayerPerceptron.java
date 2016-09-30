@@ -19,11 +19,12 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     private final NeuronLayer inputLayer;
     private final NeuronLayer outputLayer;
     private final List<NeuronLayer> perceptronLayers;
-    private double[][] lastResults;
+    private double regularizationRate = 0.08;
+    private double learningRate = 1.2;
 
-    public MultiLayerPerceptron(int input, int output, ActivationFunction outputLayerActivationFunction) {
+    public MultiLayerPerceptron(int input, int output, ActivationFunction outActFunc) {
         this.inputLayer = new InputNeuronLayer(input);
-        this.outputLayer = new OutputNeuronLayer(output, outputLayerActivationFunction);
+        this.outputLayer = new OutputNeuronLayer(output, outActFunc);
         this.perceptronLayers = new ArrayList<>();
         this.perceptronLayers.add(outputLayer);
     }
@@ -46,14 +47,10 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
     @Override
     public double[] process(double[] data) {
-        lastResults = new double[perceptronLayers.size() + 1][];
-
         double[] v = inputLayer.forwardPropagation(data);
-        lastResults[0] = v;
 
-        for (int i = 0; i < perceptronLayers.size(); i++) {
-            lastResults[i] = v;
-            v = perceptronLayers.get(i).forwardPropagation(v);
+        for (NeuronLayer perceptronLayer : perceptronLayers) {
+            v = perceptronLayer.forwardPropagation(v);
         }
         return v;
     }
@@ -63,71 +60,63 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         return train(dataSet.getInput(), dataSet.getOutput());
     }
 
-    /**
-     * @param data
-     * @param expected
-     * @return error.
-     */
     @Override
     public double train(double[][] data, double[][] expected) {
         double error = 0;
-        MatrixOperations mo = Factory.getMatrixOperations();
+        final int dataSize = data.length;
 
-        double[][][] deltas = new double[perceptronLayers.size()][][]; // layer/neuron/theta
-
-        for (int i = 0; i < data.length; i++) {
+        for (int i = 0; i < dataSize; i++) {
             // predict
             double[] calcY = process(data[i]);
-            // calculate out error start point for back propagation.
-            double[] errorOut = new double[expected[i].length];
-            for (int j = 0; j < expected[i].length; j++) {
-                errorOut[j] = calcY[j] - expected[i][j];
-            }
 
             // Back propagation for hidden layers
             List<NeuronLayer> revList = new ArrayList<>(perceptronLayers);
             Collections.reverse(revList);
 
-            for (int layer = 0; layer < revList.size(); layer++) {
-                int index = revList.size() - 1 - layer;
-
-                // compute current weight error
-                double[][] dl = new double[errorOut.length][lastResults[index].length + 1]; // neuron/theta
-
-                for (int l = 0; l < dl.length; l++) {
-                    dl[l][0] = errorOut[l];
-                    for (int e = 1; e < dl[l].length; e++) {
-                        dl[l][e] = errorOut[l] * lastResults[index][e - 1];
-                    }
-                }
-
-                deltas[index] = mo.sum(deltas[index], dl);
-
-                if (index == 0) break;
-
-                //********************************************************************************************
-                // Compute next error
-                errorOut = revList.get(layer).backPropagation(errorOut);
+            double[] errorOut = expected[i];
+            for (NeuronLayer aRevList : revList) {
+                errorOut = aRevList.backPropagation(errorOut);
             }
 
-            mo.roundMatrix(calcY, 0.5); // for error calculation. todo: cost function
-
-            if (!Arrays.equals(calcY, expected[i]))
-                error++; // Very naive implementation. Should be changed to cost function. todo
+            error = calculateCurrentItemError(calcY, expected[i], error);
         }
 
-        for (int l = 0; l < deltas.length; l++) {
-            for (int n = 0; n < deltas[l].length; n++) {
-                Neuron neuron = perceptronLayers.get(l).getNeurons().get(n);
-                double[] weights = neuron.getWeights();
+        weightsErrorProcessing(dataSize);
 
-                for (int w = 0; w < deltas[l][n].length; w++) {
-                    double regularization = w == 0 ? 0 : 0.01 * weights[w];
-                    weights[w] -= 0.9 * (deltas[l][n][w] + regularization) / data.length;
-                }
+        return error / dataSize;
+    }
+
+    private void weightsErrorProcessing(int dataSize) {
+        perceptronLayers.forEach(l -> l.getNeurons().forEach(neuron -> {
+            double[] weights = neuron.getWeights();
+            double[] weightsError = neuron.getWeightsError();
+
+            for (int w = 0; w < weightsError.length; w++) {
+                // gradient descent
+                double regularization = w == 0 ? 0 : regularizationRate * weights[w];
+                weights[w] -= learningRate * (weightsError[w] + regularization) / dataSize;
             }
-        }
 
-        return error / expected.length;
+            neuron.resetErrorWeights();
+        }));
+    }
+
+    private double calculateCurrentItemError(double[] calculated, double[] expected, double error) {
+        MatrixOperations mo = Factory.getMatrixOperations();
+        mo.roundMatrix(calculated, 0.5); // for error calculation. todo: cost function
+
+        if (!Arrays.equals(calculated, expected))
+            error++; // Very naive implementation. Should be changed to cost function. todo
+        return error;
+    }
+
+    public MultiLayerPerceptron setRegularizationRate(double regularizationRate) {
+        this.regularizationRate = regularizationRate;
+        return this;
+    }
+
+    public MultiLayerPerceptron setLearningRate(double learningRate) {
+        this.learningRate = learningRate;
+        return this;
     }
 }

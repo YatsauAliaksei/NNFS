@@ -8,7 +8,7 @@ import java.util.Random;
 public class Neuron {
     private double[] features;
     private double[] weights;
-    private double lastA;
+    private double[] weightsError;
 
     public void setFeatures(double[] features) {
         if (weights == null) {
@@ -25,8 +25,29 @@ public class Neuron {
         return weights;
     }
 
+    public void setWeights(double[] weights) {
+        this.weights = weights;
+    }
+
     public double calculate() {
-        lastA = Factory.getMatrixOperations().multiply(weights, features);
-        return lastA;
+        return Factory.getMatrixOperations().multiply(weights, features);
+    }
+
+    public double[] getWeightsError() {
+        return weightsError;
+    }
+
+    public void addWeightsError(double[] we) {
+        if (this.weightsError == null) {
+            this.weightsError = we;
+        } else {
+            for (int i = 0; i < weightsError.length; i++) {
+                weightsError[i] += we[i];
+            }
+        }
+    }
+
+    public void resetErrorWeights() {
+        weightsError = null;
     }
 }

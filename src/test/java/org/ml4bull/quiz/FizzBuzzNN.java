@@ -1,10 +1,11 @@
 package org.ml4bull.quiz;
 
 import org.junit.Test;
-import org.ml4bull.algorithm.SoftmaxFunction;
+import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
+import org.ml4bull.nn.layer.HiddenNeuronLayer;
 
 import java.util.Arrays;
 
@@ -13,7 +14,8 @@ public class FizzBuzzNN {
     @Test
     public void main() {
         FizzBuzzNN fb = new FizzBuzzNN();
-        MultiLayerPerceptron sp = new MultiLayerPerceptron(2, 4, new SoftmaxFunction());
+        MultiLayerPerceptron sp = new MultiLayerPerceptron(2, 4, new SigmoidFunction());
+        sp.addHiddenLayer(new HiddenNeuronLayer(2, new SigmoidFunction()));
 
         DataSet trainSet = fb.getTrainSet();
         double error;
