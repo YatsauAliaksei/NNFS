@@ -21,6 +21,11 @@ public class StepFunction implements ActivationFunction {
     }
 
     @Override
+    public double[] derivative(double[] lastInput) {
+        throw new UnsupportedOperationException("Derivative for step function doesn't exist.");
+    }
+
+    @Override
     public double[] activate(double[] layerOutput) {
         double[] r = new double[layerOutput.length];
         for (int i = 0; i < layerOutput.length; i++) {

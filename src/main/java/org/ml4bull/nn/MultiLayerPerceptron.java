@@ -82,6 +82,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         }
 
         weightsErrorProcessing(dataSize);
+        System.out.println("Total error: " + error);
 
         return error / dataSize;
     }
@@ -103,10 +104,10 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
     private double calculateCurrentItemError(double[] calculated, double[] expected, double error) {
         MatrixOperations mo = Factory.getMatrixOperations();
-        mo.roundMatrix(calculated, 0.5); // for error calculation. todo: cost function
+        mo.roundMatrix(calculated, 0.5); // for error calculation.
 
         if (!Arrays.equals(calculated, expected))
-            error++; // Very naive implementation. Should be changed to cost function. todo
+            error++;
         return error;
     }
 

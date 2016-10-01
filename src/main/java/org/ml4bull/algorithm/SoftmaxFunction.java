@@ -20,4 +20,13 @@ public class SoftmaxFunction implements ActivationFunction {
     public double activate(double value) {
         throw new UnsupportedOperationException("For softmax we need full layout output.");
     }
+
+    @Override
+    public double[] derivative(double[] lastInput) {
+        // todo
+        double[] a = new double[lastInput.length];
+        for (int s = 0; s < a.length; s++)
+            a[s] = (1 - lastInput[s]) * lastInput[s];
+        return a;
+    }
 }

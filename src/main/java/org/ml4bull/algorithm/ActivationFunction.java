@@ -5,4 +5,6 @@ public interface ActivationFunction {
     double[] activate(double[] layerOutput);
 
     double activate(double value);
+
+    double[] derivative(double[] lastInput);
 }

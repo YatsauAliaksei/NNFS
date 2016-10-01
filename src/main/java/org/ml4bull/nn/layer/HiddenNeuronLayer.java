@@ -53,11 +53,9 @@ public class HiddenNeuronLayer implements NeuronLayer {
         // calculating next layer error
         double[][] thetaT = mo.transpose(theta);
         double[] e = mo.multiplySingleDim(thetaT, previousError);
-        double[] a = new double[lastInput.length];
         double[] currentError = new double[e.length];
 
-        for (int s = 0; s < a.length; s++)
-            a[s] = (1 - lastInput[s]) * lastInput[s];
+        double[] a = activationFunction.derivative(lastInput);
 
         for (int d = 0; d < currentError.length; d++)
             currentError[d] = e[d] * a[d];

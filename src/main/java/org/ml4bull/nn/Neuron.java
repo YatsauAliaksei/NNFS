@@ -13,10 +13,7 @@ public class Neuron {
     public void setFeatures(double[] features) {
         if (weights == null) {
             Random random = new Random();
-            weights = new double[features.length];
-            for (int i = 0; i < weights.length; i++) {
-                weights[i] = random.nextDouble();
-            }
+            weights = random.doubles(features.length, -0.5, 0.5).toArray();
         }
         this.features = features;
     }
