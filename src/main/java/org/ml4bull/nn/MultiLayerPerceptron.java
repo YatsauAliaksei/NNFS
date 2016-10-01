@@ -82,7 +82,6 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         }
 
         weightsErrorProcessing(dataSize);
-        System.out.println("Total error: " + error);
 
         return error / dataSize;
     }
