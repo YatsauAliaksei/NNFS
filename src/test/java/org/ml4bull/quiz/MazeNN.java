@@ -21,7 +21,7 @@ public class MazeNN {
         MultiLayerPerceptron sp = new MultiLayerPerceptron(100, 1, new SigmoidFunction());
         sp.addHiddenLayer(new HiddenNeuronLayer(10, new SigmoidFunction()));
         sp.addHiddenLayer(new HiddenNeuronLayer(10, new SigmoidFunction()));
-        sp.setLearningRate(0.5).setRegularizationRate(1.1);
+        sp.setLearningRate(5e-1).setRegularizationRate(11e-1);
 
         DataSet trainSet = mazeNN.getTrainSet();
         double error;
@@ -30,7 +30,7 @@ public class MazeNN {
             long start = nanoTime();
             error = sp.train(trainSet);
             System.out.println("Epoch: " + ++epoch + " | Error: " + error + " - " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
-        } while (error > 0.1);
+        } while (error > 5e-1);
 
         DataSet testSet = mazeNN.getTestSet();
         sp.test(testSet, mazeNN.getResultProcessor());

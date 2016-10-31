@@ -1,26 +1,26 @@
 package org.ml4bull.nn;
 
 import org.ml4bull.algorithm.ActivationFunction;
-import org.ml4bull.matrix.MatrixOperations;
 import org.ml4bull.nn.data.DataSet;
 import org.ml4bull.nn.data.Printer;
 import org.ml4bull.nn.layer.InputNeuronLayer;
 import org.ml4bull.nn.layer.NeuronLayer;
 import org.ml4bull.nn.layer.OutputNeuronLayer;
-import org.ml4bull.util.Factory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.IntStream;
+
+import static org.ml4bull.util.MathUtils.log2;
 
 public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
     private final NeuronLayer inputLayer;
     private final NeuronLayer outputLayer;
     private final List<NeuronLayer> perceptronLayers;
-    private double regularizationRate = 0.08;
-    private double learningRate = 1.2;
+    private double regularizationRate = 8e-2;
+    private double learningRate = 12e-1;
 
     public MultiLayerPerceptron(int input, int output, ActivationFunction outActFunc) {
         this.inputLayer = new InputNeuronLayer(input);
@@ -38,10 +38,11 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     @Override
     public double[][] test(DataSet dataSet, Printer printer) {
         double[][] result = new double[dataSet.getInput().length][];
-        for (int i = 0; i < dataSet.getInput().length; i++) {
-            result[i] = process(dataSet.getInput()[i]);
-            printer.print(i, result[i], dataSet.getOutput()[i]);
-        }
+        IntStream.range(0, dataSet.getInput().length).forEach(i -> {
+                    result[i] = process(dataSet.getInput()[i]);
+                    printer.print(i, result[i], dataSet.getOutput()[i]);
+                }
+        );
         return result;
     }
 
@@ -83,7 +84,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
         weightsErrorProcessing(dataSize);
 
-        return error / dataSize;
+        return -error / dataSize;
     }
 
     private void weightsErrorProcessing(int dataSize) {
@@ -101,13 +102,11 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         }));
     }
 
-    private double calculateCurrentItemError(double[] calculated, double[] expected, double error) {
-        MatrixOperations mo = Factory.getMatrixOperations();
-        mo.roundMatrix(calculated, 0.5); // for error calculation.
-
-        if (!Arrays.equals(calculated, expected))
-            error++;
-        return error;
+    private double calculateCurrentItemError(double[] calculated, double[] expected, double e) {
+        for (int i = 0; i < calculated.length; i++) {
+            e += expected[i] * log2(calculated[i]) + (1 - expected[i]) * log2(1 - calculated[i]);
+        }
+        return e;
     }
 
     public MultiLayerPerceptron setRegularizationRate(double regularizationRate) {

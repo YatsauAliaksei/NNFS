@@ -5,9 +5,10 @@ import org.ml4bull.matrix.MatrixOperations;
 import org.ml4bull.nn.Neuron;
 import org.ml4bull.util.Factory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class HiddenNeuronLayer implements NeuronLayer {
     private List<Neuron> neurons;
@@ -16,10 +17,9 @@ public class HiddenNeuronLayer implements NeuronLayer {
     private double[] lastInput;
 
     public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction) {
-        this.neurons = new ArrayList<>((int) (neuronsCount * 1.75 + 1));
-        for (int i = 0; i < neuronsCount; i++) {
-            neurons.add(new Neuron());
-        }
+        neurons = IntStream.range(0, neuronsCount)
+                .mapToObj(i -> new Neuron())
+                .collect(Collectors.toList());
         this.activationFunction = activationFunction;
     }
 
@@ -30,11 +30,13 @@ public class HiddenNeuronLayer implements NeuronLayer {
         System.arraycopy(lastInput, 0, b, 1, lastInput.length);
 
         double[] rawResults = new double[neurons.size()];
-        for (int i = 0; i < neurons.size(); i++) {
+
+        IntStream.range(0, neurons.size()).forEach(i -> {
             Neuron n = neurons.get(i);
             n.setFeatures(b);
             rawResults[i] = n.calculate();
-        }
+        });
+
         lastResult = activationFunction.activate(rawResults);
         return lastResult;
     }
@@ -45,10 +47,11 @@ public class HiddenNeuronLayer implements NeuronLayer {
 
         double[][] theta = new double[neurons.size()][];
         MatrixOperations mo = Factory.getMatrixOperations();
-        for (int s = 0; s < neurons.size(); s++) {
-            double[] weights = neurons.get(s).getWeights();
-            theta[s] = Arrays.copyOfRange(weights, 1, weights.length);
-        }
+
+        IntStream.range(0, neurons.size()).forEach(i -> {
+            double[] weights = neurons.get(i).getWeights();
+            theta[i] = Arrays.copyOfRange(weights, 1, weights.length);
+        });
 
         // calculating next layer error
         double[][] thetaT = mo.transpose(theta);
@@ -57,14 +60,13 @@ public class HiddenNeuronLayer implements NeuronLayer {
 
         double[] a = activationFunction.derivative(lastInput);
 
-        for (int d = 0; d < currentError.length; d++)
-            currentError[d] = e[d] * a[d];
+        IntStream.range(0, currentError.length).forEach(d -> currentError[d] = e[d] * a[d]);
 
         return currentError;
     }
 
     protected void calculateWeightsError(double[] error) {
-        for (int i = 0; i < neurons.size(); i++) {
+        IntStream.range(0, neurons.size()).forEach(i -> {
             Neuron neuron = neurons.get(i);
             double[] we = new double[neuron.getWeights().length];
             we[0] = error[i];
@@ -72,7 +74,7 @@ public class HiddenNeuronLayer implements NeuronLayer {
                 we[t] = error[i] * lastInput[t - 1];
             }
             neuron.addWeightsError(we);
-        }
+        });
     }
 
     public void resetErrorWeights() {
