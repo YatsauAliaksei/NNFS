@@ -8,6 +8,7 @@ import org.ml4bull.util.MathUtils;
 
 import java.util.List;
 
+// Untested.
 public class KNearestNeighbors {
     private List<Data> map;
     private int k;
@@ -22,10 +23,11 @@ public class KNearestNeighbors {
 
     public double[] classify(Data input) {
         LowestQueue lq = new LowestQueue();
-        map.forEach(i -> {
+
+        map.stream().peek(i -> {
             double ed = MathUtils.euclidianDistance(i.getInput(), input.getInput());
             lq.insert(ed, i.getOutput());
-        });
+        }).parallel();
 
         return getPredictedClass(lq);
     }
@@ -65,7 +67,7 @@ public class KNearestNeighbors {
 
     private class LowestQueue {
         Item[] queue;
-        double highestValue = -1;
+        volatile double highestValue = -1;
 
         private LowestQueue() {
             queue = new Item[k];
@@ -76,13 +78,24 @@ public class KNearestNeighbors {
 
         private void insert(double value, double[] classValue) {
             if (highestValue < value) return;
-            Item item = new Item(value, classValue);
 
-            for (int i = 0; i < queue.length; i++) {
-                if (queue[i].ed > item.ed) {
-                    Item tmp = queue[i];
-                    queue[i] = item;
-                    item = tmp;
+            synchronized (this) {
+                if (highestValue < value) return;
+
+                Item item = new Item(value, classValue);
+
+                for (int i = 0; i < queue.length; i++) {
+                    if (queue[i].ed > item.ed) {
+                        Item tmp = queue[i];
+                        queue[i] = item;
+                        item = tmp;
+                    }
+                }
+
+                for (int i = queue.length; i >= 0; i--) {
+                    if (queue[i].ed != -1) {
+                        highestValue = queue[i].ed;
+                    }
                 }
             }
         }
