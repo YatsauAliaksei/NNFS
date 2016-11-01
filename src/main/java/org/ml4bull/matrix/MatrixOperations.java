@@ -42,4 +42,6 @@ public interface MatrixOperations {
     double[][] getFullIdentityMatrix(int column, int row);
 
     double[][] sum(double[][] delta, double[][] tmpE);
+
+    double[] sum(double[] el1, double[] el2);
 }

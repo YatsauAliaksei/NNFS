@@ -1,5 +1,7 @@
 package org.ml4bull.matrix;
 
+import com.google.common.base.Preconditions;
+
 public class MatrixOperationsSimple implements MatrixOperations {
 
     @Override
@@ -102,5 +104,17 @@ public class MatrixOperationsSimple implements MatrixOperations {
         ((DoubleIterator) (l, e) -> delta[l][e] += tmpE[l][e]).iterate(delta);
 
         return delta;
+    }
+
+    @Override
+    public double[] sum(double[] el1, double[] el2) {
+        Preconditions.checkArgument(el1.length == el2.length);
+        double[] result = new double[el1.length];
+
+        for (int i = 0; i < el1.length; i++) {
+            result[i] = el1[i] + el2[i];
+        }
+
+        return result;
     }
 }
