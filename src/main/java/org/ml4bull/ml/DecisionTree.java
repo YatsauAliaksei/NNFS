@@ -1,6 +1,7 @@
 package org.ml4bull.ml;
 
 
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AtomicDoubleArray;
 import org.ml4bull.matrix.MatrixOperations;
 import org.ml4bull.nn.data.Data;
@@ -23,6 +24,7 @@ public class DecisionTree {
     private int classLength;
 
     public void createTree(List<Data> dataSet) {
+        Preconditions.checkState(root == null, "Please, create new tree object.");
         root = new Node();
         classLength = dataSet.get(0).getOutput().length;
         createNode(dataSet, root);
@@ -125,32 +127,32 @@ public class DecisionTree {
         return dth.getBestFeature();
     }
 
+    private Set<Double> getFeatureList(List<Data> dataSet, int fIndex) {
+        return dataSet.stream()
+                .mapToDouble(data -> data.getInput()[fIndex])
+                .boxed().collect(Collectors.toSet());
+    }
+
     private class DecisionTreeHelper {
         AtomicDoubleArray ada = new AtomicDoubleArray(2) {{ // 0 - BestEntropy, 1 - BestFeature index.
             set(1, -1);
         }};
 
-        public void setBestEntropy(double bestEntropy) {
+        void setBestEntropy(double bestEntropy) {
             ada.set(0, bestEntropy);
         }
 
-        public void setBestFeature(int bestFeature) {
+        void setBestFeature(int bestFeature) {
             ada.set(1, bestFeature);
         }
 
-        public double getBestEntropy() {
+        double getBestEntropy() {
             return ada.get(0);
         }
 
-        public int getBestFeature() {
+        int getBestFeature() {
             return (int) ada.get(1);
         }
-    }
-
-    private Set<Double> getFeatureList(List<Data> dataSet, int fIndex) {
-        return dataSet.stream()
-                .mapToDouble(data -> data.getInput()[fIndex])
-                .boxed().collect(Collectors.toSet());
     }
 
     private class Node {
