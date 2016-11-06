@@ -44,4 +44,6 @@ public interface MatrixOperations {
     double[][] sum(double[][] delta, double[][] tmpE);
 
     double[] sum(double[] el1, double[] el2);
+
+    boolean same(double[] i1, double[] i2);
 }

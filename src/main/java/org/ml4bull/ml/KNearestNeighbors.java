@@ -9,6 +9,7 @@ import org.ml4bull.util.MathUtils;
 import java.util.List;
 
 // Untested.
+@Deprecated
 public class KNearestNeighbors {
     private List<Data> map;
     private int k;
@@ -29,10 +30,10 @@ public class KNearestNeighbors {
             lq.insert(ed, i.getOutput());
         }).parallel();
 
-        return getPredictedClass(lq);
+        return voting(lq);
     }
 
-    private double[] getPredictedClass(LowestQueue lq) {
+    private double[] voting(LowestQueue lq) {
         double[] counter = new double[lq.queue[0].classValue.length];
 
         MatrixOperations mo = Factory.getMatrixOperations();

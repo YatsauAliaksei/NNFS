@@ -117,4 +117,15 @@ public class MatrixOperationsSimple implements MatrixOperations {
 
         return result;
     }
+
+    @Override
+    public boolean same(double[] i1, double[] i2) {
+        for (int i = 0; i < i1.length; i++) {
+            if (i1[i] != i2[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }
