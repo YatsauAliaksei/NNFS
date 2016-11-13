@@ -1,6 +1,7 @@
 package org.ml4bull.matrix;
 
 import com.google.common.base.Preconditions;
+import org.jetbrains.annotations.NotNull;
 
 public class MatrixOperationsSimple implements MatrixOperations {
 
@@ -14,7 +15,7 @@ public class MatrixOperationsSimple implements MatrixOperations {
     }
 
     @Override
-    public double[][] transpose(double[] matrix) {
+    public double[][] transpose(@NotNull double[] matrix) {
         double[][] transM = new double[1][matrix.length];
         System.arraycopy(matrix, 0, transM[0], 0, matrix.length);
 
@@ -121,7 +122,7 @@ public class MatrixOperationsSimple implements MatrixOperations {
     @Override
     public boolean same(double[] i1, double[] i2) {
         for (int i = 0; i < i1.length; i++) {
-            if (i1[i] != i2[i]) {
+            if (Double.compare(i1[i], i2[i]) != 0) {
                 return false;
             }
         }

@@ -1,11 +1,14 @@
 package org.ml4bull.matrix;
 
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.junit.Test;
 
 import java.util.Arrays;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
+@Slf4j
 public class MatrixOperationsSimpleTest {
 
     MatrixOperations mo = new MatrixOperationsSimple();
@@ -56,7 +59,7 @@ public class MatrixOperationsSimpleTest {
     public void testMultiplyVector() {
         double[] v = {1, 2, 3};
         mo.printMatrix(v);
-        double[][] transpose = mo.transpose(v);
+        val transpose = mo.transpose(v);
         System.out.println();
         mo.printMatrix(transpose);
         System.out.println();

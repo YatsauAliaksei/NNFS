@@ -1,10 +1,15 @@
 package org.ml4bull.matrix;
 
-import com.sun.istack.internal.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
 public interface MatrixOperations {
+    Logger log = LoggerFactory.getLogger(MatrixOperations.class);
 
     double[][] transpose(double[][] matrix);
 
@@ -13,14 +18,16 @@ public interface MatrixOperations {
     void scalarMultiply(double[][] matrix, double k);
 
     default void printMatrix(double[][] matrix) {
-        for (double[] m : matrix) {
-            DoubleStream.of(m).forEach(e -> System.out.print(e + " "));
-            System.out.println();
-        }
+        Arrays.stream(matrix).forEachOrdered(m -> {
+            String line = Arrays.stream(m)
+                    .mapToObj(String::valueOf)
+                    .collect(Collectors.joining(" "));
+            log.info(line);
+        });
     }
 
     default void printMatrix(double[] matrix) {
-        DoubleStream.of(matrix).forEach(System.out::println);
+        DoubleStream.of(matrix).boxed().forEachOrdered(m -> log.info(m.toString()));
     }
 
     /**
@@ -29,7 +36,7 @@ public interface MatrixOperations {
      * @param matrix2
      * @return
      */
-    double multiply(@NotNull double[] matrix1, @NotNull double[] matrix2);
+    double multiply(double[] matrix1, double[] matrix2);
 
     double[][] multiply(double[][] matrix1, double[][] matrix2);
 
