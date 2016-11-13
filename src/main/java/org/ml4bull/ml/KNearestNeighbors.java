@@ -8,8 +8,6 @@ import org.ml4bull.util.MathUtils;
 
 import java.util.List;
 
-// Untested.
-@Deprecated
 public class KNearestNeighbors {
     private List<Data> map;
     private int k;

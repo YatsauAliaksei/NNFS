@@ -16,8 +16,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-// Untested
-@Deprecated
 public class DecisionTree {
 
     private Node root;
