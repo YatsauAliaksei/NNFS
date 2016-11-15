@@ -8,4 +8,8 @@ public class DataSet {
     private double[][] input;
     @NonNull
     private double[][] output;
+
+    public int getDataSetSize() {
+        return input.length;
+    }
 }

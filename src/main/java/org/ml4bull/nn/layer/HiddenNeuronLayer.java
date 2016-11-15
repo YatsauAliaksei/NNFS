@@ -45,6 +45,7 @@ public class HiddenNeuronLayer implements NeuronLayer {
     public double[] backPropagation(double[] previousError) {
         calculateWeightsError(previousError);
 
+        // prepare
         double[][] theta = new double[neurons.size()][];
         MatrixOperations mo = Factory.getMatrixOperations();
 
@@ -53,7 +54,7 @@ public class HiddenNeuronLayer implements NeuronLayer {
             theta[i] = Arrays.copyOfRange(weights, 1, weights.length);
         });
 
-        // calculating next layer error
+        // calculating layer error
         double[][] thetaT = mo.transpose(theta);
         double[] e = mo.multiplySingleDim(thetaT, previousError);
         double[] currentError = new double[e.length];
@@ -65,20 +66,21 @@ public class HiddenNeuronLayer implements NeuronLayer {
         return currentError;
     }
 
+    // Theta T x E. Multiply weights on previous layer error.
     protected void calculateWeightsError(double[] error) {
         IntStream.range(0, neurons.size()).forEach(i -> {
             Neuron neuron = neurons.get(i);
             double[] we = new double[neuron.getWeights().length];
-            we[0] = error[i];
-            for (int t = 1; t < we.length; t++) {
-                we[t] = error[i] * lastInput[t - 1];
+            we[0] = error[i]; // bias error
+            for (int t = 1; t < we.length; t++) { // omitting bias
+                we[t] = error[i] * lastInput[t - 1]; // calculate current layer error delta
             }
             neuron.addWeightsError(we);
         });
     }
 
     public void resetErrorWeights() {
-        neurons.forEach(neuron -> resetErrorWeights());
+        neurons.stream().peek(Neuron::resetErrorWeights);
     }
 
     @Override

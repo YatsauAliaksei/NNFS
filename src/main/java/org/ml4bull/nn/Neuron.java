@@ -1,37 +1,28 @@
 package org.ml4bull.nn;
 
 
+import lombok.Getter;
+import lombok.Setter;
 import org.ml4bull.util.Factory;
-
-import java.util.Random;
+import org.ml4bull.util.MLUtils;
 
 public class Neuron {
     private double[] features;
+    @Getter
+    @Setter
     private double[] weights;
+    @Getter
     private double[] weightsError;
 
     public void setFeatures(double[] features) {
         if (weights == null) {
-            Random random = new Random();
-            weights = random.doubles(features.length, -0.5, 0.5).toArray();
+            weights = MLUtils.getRandomWeights(features.length);
         }
         this.features = features;
     }
 
-    public double[] getWeights() {
-        return weights;
-    }
-
-    public void setWeights(double[] weights) {
-        this.weights = weights;
-    }
-
     public double calculate() {
         return Factory.getMatrixOperations().multiply(weights, features);
-    }
-
-    public double[] getWeightsError() {
-        return weightsError;
     }
 
     public void addWeightsError(double[] we) {

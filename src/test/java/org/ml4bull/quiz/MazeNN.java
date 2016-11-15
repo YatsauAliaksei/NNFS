@@ -1,5 +1,6 @@
 package org.ml4bull.quiz;
 
+import org.ml4bull.algorithm.GradientDescent;
 import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.matrix.DoubleIterator;
@@ -18,12 +19,17 @@ public class MazeNN {
 
     public static void main(String[] arg) {
         MazeNN mazeNN = new MazeNN();
-        MultiLayerPerceptron sp = new MultiLayerPerceptron(100, 1, new SigmoidFunction());
-        sp.addHiddenLayer(new HiddenNeuronLayer(10, new SigmoidFunction()));
-        sp.addHiddenLayer(new HiddenNeuronLayer(10, new SigmoidFunction()));
-        sp.setLearningRate(5e-1).setRegularizationRate(11e-1);
-
         DataSet trainSet = mazeNN.getTrainSet();
+
+        GradientDescent optAlg = GradientDescent.builder()
+                .batchSize(trainSet.getDataSetSize())
+                .learningRate(5e-1)
+                .regularizationRate(11e-1).build();
+
+        MultiLayerPerceptron sp = new MultiLayerPerceptron(100, 1, optAlg, new SigmoidFunction());
+        sp.addHiddenLayer(new HiddenNeuronLayer(10, new SigmoidFunction()));
+        sp.addHiddenLayer(new HiddenNeuronLayer(10, new SigmoidFunction()));
+
         double error;
         int epoch = 0;
         do {
@@ -33,7 +39,7 @@ public class MazeNN {
         } while (error > 5e-1);
 
         DataSet testSet = mazeNN.getTestSet();
-        sp.test(testSet, mazeNN.getResultProcessor());
+        sp.classify(testSet, mazeNN.getResultProcessor());
         System.exit(0);
     }
 

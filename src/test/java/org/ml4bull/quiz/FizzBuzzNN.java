@@ -1,6 +1,7 @@
 package org.ml4bull.quiz;
 
 import org.junit.Test;
+import org.ml4bull.algorithm.GradientDescent;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.nn.MultiLayerPerceptron;
@@ -13,9 +14,21 @@ public class FizzBuzzNN {
     @Test
     public void main() {
         FizzBuzzNN fb = new FizzBuzzNN();
-        MultiLayerPerceptron sp = new MultiLayerPerceptron(2, 4, new SoftmaxFunction());
-
         DataSet trainSet = fb.getTrainSet();
+
+        GradientDescent optAlg = GradientDescent.builder()
+                .learningRate(12e-1)
+                .regularizationRate(8e-2)
+                .batchSize(trainSet.getDataSetSize())
+                .build();
+
+        MultiLayerPerceptron sp = MultiLayerPerceptron.builder()
+                .input(2)
+                .output(4)
+                .outActFunc(new SoftmaxFunction())
+                .optAlg(optAlg)
+                .build();
+
         double error;
         int epoch = 0;
         do {
@@ -24,7 +37,7 @@ public class FizzBuzzNN {
         } while (error > 0.3);
 
         DataSet testSet = fb.getTestSet();
-        sp.test(testSet, (i, calc, ideal) -> System.out.println(backConvert(calc, i)));
+        sp.classify(testSet, (i, calc, ideal) -> System.out.println(backConvert(calc, i)));
         System.exit(0);
     }
 

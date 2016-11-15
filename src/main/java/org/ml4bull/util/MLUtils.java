@@ -1,5 +1,7 @@
 package org.ml4bull.util;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class MLUtils {
 
     /**
@@ -19,5 +21,10 @@ public class MLUtils {
         double[] c = new double[arrLength];
         c[arrLength - value] = 1;
         return c;
+    }
+
+    public static double[] getRandomWeights(int size) {
+        ThreadLocalRandom tlr = ThreadLocalRandom.current();
+        return tlr.doubles(size, -0.5, 0.5).toArray();
     }
 }
