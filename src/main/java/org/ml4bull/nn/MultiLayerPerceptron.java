@@ -1,5 +1,6 @@
 package org.ml4bull.nn;
 
+import com.google.common.util.concurrent.AtomicDoubleArray;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.ml4bull.algorithm.ActivationFunction;
@@ -45,7 +46,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     public double[][] classify(DataSet dataSet, Printer printer) {
         double[][] result = new double[dataSet.getInput().length][];
         IntStream.range(0, dataSet.getInput().length)
-                .parallel()
+//                .parallel()
                 .forEach(i -> {
                             result[i] = process(dataSet.getInput()[i]);
                             printer.print(i, result[i], dataSet.getOutput()[i]);
@@ -70,7 +71,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
         double error = dataSet.stream()
                 .mapToDouble(data -> calculateAndGetItemError(data.getInput(), data.getOutput()))
-//                .parallel()
+                .parallel()
                 .sum();
 
         updateWeights();
@@ -83,10 +84,8 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
         double error = IntStream.range(0, dataSize)
                 .mapToDouble(i -> calculateAndGetItemError(data[i], expected[i]))
-//                .parallel()
+                .parallel()
                 .sum();
-
-        updateWeights();
 
         return -error / dataSize;
     }
@@ -109,22 +108,21 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         return error;
     }
 
-    private void updateWeights() {
+    private synchronized void updateWeights() {
         if (!optAlg.isLimitReached()) return;
 
         perceptronLayers.stream()
                 .flatMap(l -> l.getNeurons().stream())
-//                .parallel()
                 .forEach(neuron -> {
                     double[] weights = neuron.getWeights();
-                    double[] weightsError = neuron.getWeightsError();
+                    AtomicDoubleArray weightsError = neuron.getWeightsError();
+                    double[] we = IntStream.range(0, weightsError.length()).mapToDouble(weightsError::get).toArray();
 
-                    optAlg.optimizeWeights(weights, weightsError);
+                    optAlg.optimizeWeights(weights, we);
 
                     neuron.resetErrorWeights();
                 });
     }
-
 
     private double itemCostFunction(double[] calculated, double[] expected) {
         double error = .0;

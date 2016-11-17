@@ -13,8 +13,8 @@ import java.util.stream.IntStream;
 public class HiddenNeuronLayer implements NeuronLayer {
     private List<Neuron> neurons;
     private ActivationFunction activationFunction;
-    protected double[] lastResult;
-    private double[] lastInput;
+    protected ThreadLocal<double[]> lastResult = new ThreadLocal<>();
+    protected ThreadLocal<double[]> lastInput = new ThreadLocal<>();
 
     public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction) {
         neurons = IntStream.range(0, neuronsCount)
@@ -24,10 +24,10 @@ public class HiddenNeuronLayer implements NeuronLayer {
     }
 
     public double[] forwardPropagation(double[] f) {
-        lastInput = f;
-        double[] b = new double[lastInput.length + 1];
+        lastInput.set(f);
+        double[] b = new double[f.length + 1];
         b[0] = 1;
-        System.arraycopy(lastInput, 0, b, 1, lastInput.length);
+        System.arraycopy(f, 0, b, 1, f.length);
 
         double[] rawResults = new double[neurons.size()];
 
@@ -37,8 +37,8 @@ public class HiddenNeuronLayer implements NeuronLayer {
             rawResults[i] = n.calculate();
         });
 
-        lastResult = activationFunction.activate(rawResults);
-        return lastResult;
+        lastResult.set(activationFunction.activate(rawResults));
+        return lastResult.get();
     }
 
     @Override
@@ -46,20 +46,23 @@ public class HiddenNeuronLayer implements NeuronLayer {
         calculateWeightsError(previousError);
 
         // prepare
+        // layer weights matrix
         double[][] theta = new double[neurons.size()][];
-        MatrixOperations mo = Factory.getMatrixOperations();
 
         IntStream.range(0, neurons.size()).forEach(i -> {
+            // This is not atomic. But I think we really don't care.
+            // In worse case we'll have partially optimized weights.
             double[] weights = neurons.get(i).getWeights();
             theta[i] = Arrays.copyOfRange(weights, 1, weights.length);
         });
 
+        MatrixOperations mo = Factory.getMatrixOperations();
         // calculating layer error
         double[][] thetaT = mo.transpose(theta);
         double[] e = mo.multiplySingleDim(thetaT, previousError);
         double[] currentError = new double[e.length];
 
-        double[] a = activationFunction.derivative(lastInput);
+        double[] a = activationFunction.derivative(lastInput.get());
 
         IntStream.range(0, currentError.length).forEach(d -> currentError[d] = e[d] * a[d]);
 
@@ -73,14 +76,10 @@ public class HiddenNeuronLayer implements NeuronLayer {
             double[] we = new double[neuron.getWeights().length];
             we[0] = error[i]; // bias error
             for (int t = 1; t < we.length; t++) { // omitting bias
-                we[t] = error[i] * lastInput[t - 1]; // calculate current layer error delta
+                we[t] = error[i] * lastInput.get()[t - 1]; // calculate current layer error delta
             }
             neuron.addWeightsError(we);
         });
-    }
-
-    public void resetErrorWeights() {
-        neurons.stream().peek(Neuron::resetErrorWeights);
     }
 
     @Override

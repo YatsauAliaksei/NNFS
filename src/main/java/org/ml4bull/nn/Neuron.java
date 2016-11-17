@@ -1,41 +1,53 @@
 package org.ml4bull.nn;
 
 
+import com.google.common.util.concurrent.AtomicDoubleArray;
 import lombok.Getter;
 import lombok.Setter;
 import org.ml4bull.util.Factory;
 import org.ml4bull.util.MLUtils;
 
+import java.util.stream.IntStream;
+
 public class Neuron {
-    private double[] features;
+    private ThreadLocal<double[]> features = new ThreadLocal<>();
     @Getter
     @Setter
-    private double[] weights;
+    volatile private double[] weights;
     @Getter
-    private double[] weightsError;
+    private AtomicDoubleArray weightsError;
 
     public void setFeatures(double[] features) {
         if (weights == null) {
-            weights = MLUtils.getRandomWeights(features.length);
+            synchronized (this) {
+                if (weights != null) return;
+                weightsError = new AtomicDoubleArray(features.length);
+                weights = MLUtils.getRandomWeights(features.length);
+            }
         }
-        this.features = features;
+        this.features.set(features);
     }
 
     public double calculate() {
-        return Factory.getMatrixOperations().multiply(weights, features);
+        return Factory.getMatrixOperations().multiply(weights, features.get());
     }
 
-    public void addWeightsError(double[] we) {
-        if (this.weightsError == null) {
+    public synchronized void addWeightsError(double[] we) {
+        for (int i = 0; i < weightsError.length(); i++) {
+            weightsError.addAndGet(i, we[i]);
+        }
+
+
+/*        if (this.weightsError == null) {
             this.weightsError = we;
         } else {
             for (int i = 0; i < weightsError.length; i++) {
                 weightsError[i] += we[i];
             }
-        }
+        }*/
     }
 
     public void resetErrorWeights() {
-        weightsError = null;
+        IntStream.range(0, weightsError.length()).forEach(i -> weightsError.set(i, 0));
     }
 }

@@ -13,7 +13,7 @@ public class OutputNeuronLayer extends HiddenNeuronLayer {
         // calculate out error start point for back propagation.
         double[] errorOut = new double[expected.length];
         for (int j = 0; j < expected.length; j++) {
-            errorOut[j] = lastResult[j] - expected[j];
+            errorOut[j] = lastResult.get()[j] - expected[j];
         }
 
         return super.backPropagation(errorOut);

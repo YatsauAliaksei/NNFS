@@ -1,5 +1,7 @@
 package org.ml4bull.quiz;
 
+import com.google.common.base.Stopwatch;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.ml4bull.algorithm.GradientDescent;
 import org.ml4bull.algorithm.SoftmaxFunction;
@@ -9,16 +11,16 @@ import org.ml4bull.nn.data.DataSet;
 
 import java.util.Arrays;
 
+@Slf4j
 public class FizzBuzzNN {
 
     @Test
     public void main() {
+        Stopwatch stopwatch = Stopwatch.createStarted();
         FizzBuzzNN fb = new FizzBuzzNN();
         DataSet trainSet = fb.getTrainSet();
 
         GradientDescent optAlg = GradientDescent.builder()
-                .learningRate(12e-1)
-                .regularizationRate(8e-2)
                 .batchSize(trainSet.getDataSetSize())
                 .build();
 
@@ -33,11 +35,13 @@ public class FizzBuzzNN {
         int epoch = 0;
         do {
             error = sp.train(trainSet);
-            System.out.println("Epoch: " + ++epoch + " | Error: " + error);
+            log.info("Epoch: {} | Error: {}", ++epoch, +error);
         } while (error > 0.3);
 
         DataSet testSet = fb.getTestSet();
         sp.classify(testSet, (i, calc, ideal) -> System.out.println(backConvert(calc, i)));
+
+        log.info("Time overall {}", stopwatch.stop().toString());
         System.exit(0);
     }
 
@@ -53,11 +57,8 @@ public class FizzBuzzNN {
         double[][] input = new double[end - start][];
         double[][] output = new double[end - start][];
         for (int i = start; i < end; i++) {
-            double[][] data = generateData(i);
-//            System.out.print(i + ": ");
-//            System.out.println(Arrays.deepToString(data));
             input[i - start] = new double[]{i % 3.0, i % 5.0};
-            output[i - start] = data[1];
+            output[i - start] = result(i);
         }
         return new DataSet(input, output);
     }
@@ -74,26 +75,6 @@ public class FizzBuzzNN {
         } else {
             return String.valueOf(++number);
         }
-    }
-
-
-    private double[][] generateData(int i) {
-        double[] data = binaryData(i);
-        double[] result = result(i);
-
-        return new double[][]{data, result};
-    }
-
-    private double[] binaryData(int i) {
-        String binary = Integer.toBinaryString(i);
-        char[] chars = binary.toCharArray();
-
-        double[] data = new double[10];
-
-        for (int j = 0; j < chars.length; j++) {
-            data[9 - j] = chars[chars.length - j - 1] == '1' ? 1 : 0;
-        }
-        return data;
     }
 
     private double[] result(int i) {
