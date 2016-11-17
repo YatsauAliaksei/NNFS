@@ -21,7 +21,8 @@ public class FizzBuzzNN {
         DataSet trainSet = fb.getTrainSet();
 
         GradientDescent optAlg = GradientDescent.builder()
-                .batchSize(trainSet.getDataSetSize())
+//                .batchSize(trainSet.getDataSetSize())
+                .batchSize(15)
                 .build();
 
         MultiLayerPerceptron sp = MultiLayerPerceptron.builder()

@@ -13,16 +13,17 @@ public class Neuron {
     private ThreadLocal<double[]> features = new ThreadLocal<>();
     @Getter
     @Setter
-    volatile private double[] weights;
+    private double[] weights;
     @Getter
     private AtomicDoubleArray weightsError;
 
     public void setFeatures(double[] features) {
         if (weights == null) {
             synchronized (this) {
-                if (weights != null) return;
-                weightsError = new AtomicDoubleArray(features.length);
-                weights = MLUtils.getRandomWeights(features.length);
+                if (weights == null) {
+                    weightsError = new AtomicDoubleArray(features.length);
+                    weights = MLUtils.getRandomWeights(features.length);
+                }
             }
         }
         this.features.set(features);
@@ -36,15 +37,6 @@ public class Neuron {
         for (int i = 0; i < weightsError.length(); i++) {
             weightsError.addAndGet(i, we[i]);
         }
-
-
-/*        if (this.weightsError == null) {
-            this.weightsError = we;
-        } else {
-            for (int i = 0; i < weightsError.length; i++) {
-                weightsError[i] += we[i];
-            }
-        }*/
     }
 
     public void resetErrorWeights() {
