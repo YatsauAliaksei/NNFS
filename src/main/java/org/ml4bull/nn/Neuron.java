@@ -33,7 +33,7 @@ public class Neuron {
         return Factory.getMatrixOperations().multiply(weights, features.get());
     }
 
-    public synchronized void addWeightsError(double[] we) {
+    public void addWeightsError(double[] we) {
         for (int i = 0; i < weightsError.length(); i++) {
             weightsError.addAndGet(i, we[i]);
         }

@@ -22,7 +22,9 @@ public class FizzBuzzNN {
 
         GradientDescent optAlg = GradientDescent.builder()
 //                .batchSize(trainSet.getDataSetSize())
-                .batchSize(15)
+                .learningRate(.112)
+                .regularizationRate(.001)
+                .batchSize(1)
                 .build();
 
         MultiLayerPerceptron sp = MultiLayerPerceptron.builder()
@@ -37,7 +39,7 @@ public class FizzBuzzNN {
         do {
             error = sp.train(trainSet);
             log.info("Epoch: {} | Error: {}", ++epoch, +error);
-        } while (error > 0.3);
+        } while (error > 0.1);
 
         DataSet testSet = fb.getTestSet();
         sp.classify(testSet, (i, calc, ideal) -> System.out.println(backConvert(calc, i)));

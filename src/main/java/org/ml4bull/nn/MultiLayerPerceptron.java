@@ -15,6 +15,7 @@ import org.ml4bull.nn.layer.OutputNeuronLayer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 import java.util.stream.IntStream;
 
 import static org.ml4bull.util.MathUtils.log2;
@@ -26,6 +27,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     private final NeuronLayer outputLayer;
     private final List<NeuronLayer> perceptronLayers;
     private OptimizationAlgorithm optAlg;
+    private Semaphore semaphore;
 
     @Builder
     public MultiLayerPerceptron(int input, int output, OptimizationAlgorithm optAlg, ActivationFunction outActFunc) {
@@ -34,6 +36,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         this.outputLayer = new OutputNeuronLayer(output, outActFunc);
         this.perceptronLayers = new ArrayList<>();
         this.perceptronLayers.add(outputLayer);
+        this.semaphore = new Semaphore(optAlg.getBatchSize());
     }
 
     @Override
@@ -92,6 +95,13 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
     private double calculateAndGetItemError(double[] input, double[] output) {
         // predict
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            log.error("Thread was interrupted.");
+            throw new RuntimeException(e);
+        }
+
         double[] calcY = process(input);
 
         // Back propagation for hidden layers
@@ -108,7 +118,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         return error;
     }
 
-    private synchronized void updateWeights() {
+    private void updateWeights() {
         if (!optAlg.isLimitReached()) return;
 
         perceptronLayers.stream()
@@ -122,6 +132,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
                     neuron.resetErrorWeights();
                 });
+        semaphore.release(optAlg.getBatchSize());
     }
 
     private double itemCostFunction(double[] calculated, double[] expected) {
