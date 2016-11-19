@@ -22,9 +22,8 @@ public class GradientDescent implements OptimizationAlgorithm {
 
     @Override
     public boolean isLimitReached() {
-        // not atomic
         if (counter.incrementAndGet() == batchSize) {
-            counter.set(0);
+            counter.addAndGet(-batchSize);
             return true;
         }
         return false;
