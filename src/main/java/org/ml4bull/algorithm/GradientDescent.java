@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 public class GradientDescent implements OptimizationAlgorithm {
 
     @Getter
-    private final int batchSize;
+    private int batchSize;
     @Getter
     @Setter
     private double regularizationRate;

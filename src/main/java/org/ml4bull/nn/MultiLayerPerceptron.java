@@ -2,6 +2,7 @@ package org.ml4bull.nn;
 
 import com.google.common.util.concurrent.AtomicDoubleArray;
 import lombok.Builder;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.ml4bull.algorithm.ActivationFunction;
 import org.ml4bull.algorithm.OptimizationAlgorithm;
@@ -99,15 +100,11 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         return -error / dataSize;
     }
 
+    @SneakyThrows(InterruptedException.class)
     private double calculateAndGetItemError(double[] input, double[] output) {
-        // predict
-        try {
-            semaphore.acquire();
-        } catch (InterruptedException e) {
-            log.error("Thread was interrupted.");
-            throw new RuntimeException(e);
-        }
+        semaphore.acquire();
 
+        // predict
         double[] calcY = process(input);
 
         // Back propagation for hidden layers
