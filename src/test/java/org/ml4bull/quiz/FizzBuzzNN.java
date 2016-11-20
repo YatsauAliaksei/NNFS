@@ -22,7 +22,7 @@ public class FizzBuzzNN {
 
         GradientDescent optAlg = GradientDescent.builder()
                 .learningRate(.12)
-                .regularizationRate(.001)
+                .regularizationRate(.007)
                 .batchSize(80)
                 .build();
 
@@ -38,7 +38,7 @@ public class FizzBuzzNN {
         do {
             error = sp.train(trainSet, true);
             log.info("Epoch: {} | Error: {}", ++epoch, +error);
-        } while (error > 0.1);
+        } while (error > 0.2);
 
         DataSet testSet = fb.getTestSet();
         sp.classify(testSet, false, (i, calc, ideal) -> System.out.println(backConvert(calc, i)));

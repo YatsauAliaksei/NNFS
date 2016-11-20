@@ -51,9 +51,10 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     public double[][] classify(DataSet dataSet, boolean isParallel, Printer printer) {
         double[][] result = new double[dataSet.getInput().length][];
         IntStream is = IntStream.range(0, dataSet.getInput().length);
-        if (isParallel) {
+
+        if (isParallel)
             is = is.parallel();
-        }
+
         is.forEach(i -> {
                     result[i] = process(dataSet.getInput()[i]);
                     printer.print(i, result[i], dataSet.getOutput()[i]);
@@ -80,17 +81,16 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
                 .mapToDouble(data -> calculateAndGetItemError(data.getInput(), data.getOutput()));
         double error = run(isParallel, ds);
 
-        if (optAlg.hasError()) {
+        if (optAlg.hasError())
             optimize();
-        }
 
         return -error / dataSize;
     }
 
     private double run(boolean isParallel, DoubleStream ds) {
-        if (isParallel) {
+        if (isParallel)
             ds = ds.parallel();
-        }
+
         return ds.sum();
     }
 
@@ -101,9 +101,8 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
                 .mapToDouble(i -> calculateAndGetItemError(data[i], expected[i]));
         double error = run(isParallel, ds);
 
-        if (optAlg.hasError()) {
+        if (optAlg.hasError())
             optimize();
-        }
 
         return -error / dataSize;
     }
@@ -123,13 +122,12 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         for (NeuronLayer aRevList : revList) {
             errorOut = aRevList.backPropagation(errorOut);
         }
-        updateWeights();
+        tryUpdateWeights();
 
-        double error = itemCostFunction(calcY, output);
-        return error;
+        return itemCostFunction(calcY, output);
     }
 
-    private void updateWeights() {
+    private void tryUpdateWeights() {
         if (!optAlg.isLimitReached()) return;
 
         optimize();
