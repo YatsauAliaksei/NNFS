@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 import static org.ml4bull.util.MathUtils.log2;
@@ -46,15 +47,17 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     }
 
     @Override
-    public double[][] classify(DataSet dataSet, Printer printer) {
+    public double[][] classify(DataSet dataSet, boolean isParallel, Printer printer) {
         double[][] result = new double[dataSet.getInput().length][];
-        IntStream.range(0, dataSet.getInput().length)
-//                .parallel()
-                .forEach(i -> {
-                            result[i] = process(dataSet.getInput()[i]);
-                            printer.print(i, result[i], dataSet.getOutput()[i]);
-                        }
-                );
+        IntStream is = IntStream.range(0, dataSet.getInput().length);
+        if (isParallel) {
+            is = is.parallel();
+        }
+        is.forEach(i -> {
+                    result[i] = process(dataSet.getInput()[i]);
+                    printer.print(i, result[i], dataSet.getOutput()[i]);
+                }
+        );
         return result;
     }
 
@@ -65,31 +68,34 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     }
 
     @Override
-    public double train(DataSet dataSet) {
-        return train(dataSet.getInput(), dataSet.getOutput());
+    public double train(DataSet dataSet, boolean isParallel) {
+        return train(dataSet.getInput(), dataSet.getOutput(), isParallel);
     }
 
-    public double train(List<Data> dataSet) {
+    public double train(List<Data> dataSet, boolean isParallel) {
         final int dataSize = dataSet.size();
 
-        double error = dataSet.stream()
-                .mapToDouble(data -> calculateAndGetItemError(data.getInput(), data.getOutput()))
-                .parallel()
-                .sum();
+        DoubleStream ds = dataSet.stream()
+                .mapToDouble(data -> calculateAndGetItemError(data.getInput(), data.getOutput()));
 
-        updateWeights();
-
+        double error = run(isParallel, ds);
         return -error / dataSize;
     }
 
-    private double train(double[][] data, double[][] expected) {
+    private double run(boolean isParallel, DoubleStream ds) {
+        if (isParallel) {
+            ds = ds.parallel();
+        }
+        return ds.sum();
+    }
+
+    private double train(double[][] data, double[][] expected, boolean isParallel) {
         final int dataSize = data.length;
 
-        double error = IntStream.range(0, dataSize)
-                .mapToDouble(i -> calculateAndGetItemError(data[i], expected[i]))
-                .parallel()
-                .sum();
+        DoubleStream ds = IntStream.range(0, dataSize)
+                .mapToDouble(i -> calculateAndGetItemError(data[i], expected[i]));
 
+        double error = run(isParallel, ds);
         return -error / dataSize;
     }
 

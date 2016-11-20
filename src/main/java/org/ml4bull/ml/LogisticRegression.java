@@ -2,11 +2,8 @@ package org.ml4bull.ml;
 
 import org.ml4bull.annotation.Untested;
 import org.ml4bull.nn.Neuron;
-import org.ml4bull.nn.data.Data;
 import org.ml4bull.nn.data.DataSet;
 import org.ml4bull.nn.data.Printer;
-
-import java.util.List;
 
 @Untested
 public class LogisticRegression implements SupervisedAlgorithm {
@@ -17,17 +14,12 @@ public class LogisticRegression implements SupervisedAlgorithm {
     }
 
     @Override
-    public double[][] classify(DataSet dataSet, Printer printer) {
+    public double[][] classify(DataSet dataSet, boolean classifyParallel, Printer printer) {
         return new double[0][];
     }
 
     @Override
-    public double train(DataSet dataSet) {
-        return 0;
-    }
-
-    @Override
-    public double train(List<Data> dataSet) {
+    public double train(DataSet dataSet, boolean trainParallel) {
         return 0;
     }
 }

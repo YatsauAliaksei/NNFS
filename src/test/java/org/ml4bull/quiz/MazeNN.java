@@ -34,12 +34,12 @@ public class MazeNN {
         int epoch = 0;
         do {
             long start = nanoTime();
-            error = sp.train(trainSet);
+            error = sp.train(trainSet, true);
             System.out.println("Epoch: " + ++epoch + " | Error: " + error + " - " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
         } while (error > 5e-1);
 
         DataSet testSet = mazeNN.getTestSet();
-        sp.classify(testSet, mazeNN.getResultProcessor());
+        sp.classify(testSet, false, mazeNN.getResultProcessor());
         System.exit(0);
     }
 
