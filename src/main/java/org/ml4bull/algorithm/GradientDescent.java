@@ -18,6 +18,7 @@ public class GradientDescent implements OptimizationAlgorithm {
     @Getter
     @Setter
     private double learningRate;
+    @Getter
     private AtomicInteger counter;
 
     @Override
@@ -27,6 +28,10 @@ public class GradientDescent implements OptimizationAlgorithm {
             return true;
         }
         return false;
+    }
+
+    public boolean hasError() {
+        return counter.get() != 0;
     }
 
     @Override

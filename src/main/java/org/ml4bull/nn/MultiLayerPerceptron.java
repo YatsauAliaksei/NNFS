@@ -78,8 +78,12 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
         DoubleStream ds = dataSet.stream()
                 .mapToDouble(data -> calculateAndGetItemError(data.getInput(), data.getOutput()));
-
         double error = run(isParallel, ds);
+
+        if (optAlg.hasError()) {
+            optimize();
+        }
+
         return -error / dataSize;
     }
 
@@ -95,8 +99,12 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
         DoubleStream ds = IntStream.range(0, dataSize)
                 .mapToDouble(i -> calculateAndGetItemError(data[i], expected[i]));
-
         double error = run(isParallel, ds);
+
+        if (optAlg.hasError()) {
+            optimize();
+        }
+
         return -error / dataSize;
     }
 
@@ -124,6 +132,11 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     private void updateWeights() {
         if (!optAlg.isLimitReached()) return;
 
+        optimize();
+        semaphore.release(optAlg.getBatchSize());
+    }
+
+    private void optimize() {
         perceptronLayers.stream()
                 .flatMap(l -> l.getNeurons().stream())
                 .forEach(neuron -> {
@@ -135,7 +148,6 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
                     neuron.resetErrorWeights();
                 });
-        semaphore.release(optAlg.getBatchSize());
     }
 
     private double itemCostFunction(double[] calculated, double[] expected) {

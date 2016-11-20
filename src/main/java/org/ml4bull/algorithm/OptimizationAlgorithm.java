@@ -5,5 +5,7 @@ public interface OptimizationAlgorithm {
 
     void optimizeWeights(double[] weights, double[] weightsError);
 
+    boolean hasError();
+
     int getBatchSize();
 }

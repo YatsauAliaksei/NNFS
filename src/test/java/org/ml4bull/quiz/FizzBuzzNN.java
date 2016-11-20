@@ -21,7 +21,6 @@ public class FizzBuzzNN {
         DataSet trainSet = fb.getTrainSet();
 
         GradientDescent optAlg = GradientDescent.builder()
-//                .batchSize(trainSet.getDataSetSize())
                 .learningRate(.12)
                 .regularizationRate(.001)
                 .batchSize(80)
