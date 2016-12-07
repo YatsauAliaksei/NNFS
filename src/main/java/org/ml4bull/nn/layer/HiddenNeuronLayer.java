@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class HiddenNeuronLayer implements NeuronLayer {
-    private List<Neuron> neurons;
-    private ActivationFunction activationFunction;
+    protected List<Neuron> neurons;
+    protected ActivationFunction activationFunction;
     protected ThreadLocal<double[]> lastResult = new ThreadLocal<>();
     protected ThreadLocal<double[]> lastInput = new ThreadLocal<>();
 
@@ -50,8 +50,6 @@ public class HiddenNeuronLayer implements NeuronLayer {
         double[][] theta = new double[neurons.size()][];
 
         IntStream.range(0, neurons.size()).forEach(i -> {
-            // This is not atomic. But I think we really don't care.
-            // In worse case we'll have partially optimized weights.
             double[] weights = neurons.get(i).getWeights();
             theta[i] = Arrays.copyOfRange(weights, 1, weights.length);
         });

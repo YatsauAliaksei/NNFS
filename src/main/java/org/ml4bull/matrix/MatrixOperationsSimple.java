@@ -28,6 +28,13 @@ public class MatrixOperationsSimple implements MatrixOperations {
     }
 
     @Override
+    public void scalarMultiply(double[] matrix, double k) {
+        for (int i = 0; i < matrix.length; i++) {
+            matrix[i] *= k;
+        }
+    }
+
+    @Override
     public double multiply(double[] matrix1, double[] matrix2) {
         if (matrix1.length != matrix2.length)
             throw new IllegalArgumentException("Row number of first matrix should be equal to column number of second matrix.");
