@@ -38,17 +38,26 @@ public class CharPredictRNN {
 
         double error;
         int epoch = 0;
+        double maxError;
         do {
             epoch++;
-            error = 0;
+            maxError = 0;
             for (String word : words) {
                 log.info("Word: {}", word);
 
                 DataSet ds = createDataSetFromWord(word);
-                error += mlp.train(ds, false);
+                error = mlp.train(ds, false);
+                if (Double.isNaN(error)) {
+                    break;
+                }
+                if (error > maxError) {
+                    maxError = error;
+                }
+
                 log.info("Epoch {} | Error: {}", epoch, error);
+                log.info("Max error {}", maxError);
             }
-        } while (error / words.size() > 0.4);
+        } while (Double.compare(maxError, 0.6) == 1);
 
         predict(mlp, w1);
         predict(mlp, w2);
@@ -57,9 +66,9 @@ public class CharPredictRNN {
 
     @NotNull
     private double[][] predict(MultiLayerPerceptron mlp, String word) {
-        DataSet helloDS = createDataSetFromWord(word);
+        DataSet wordDS = createDataSetFromWord(word);
 
-        double[][] classify = mlp.classify(helloDS, false);
+        double[][] classify = mlp.classify(wordDS, false);
 
         for (double[] d : classify) {
             char c = fromDArrayToChar(d);
@@ -94,7 +103,7 @@ public class CharPredictRNN {
 
     private MultiLayerPerceptron getNN() {
         GradientDescent optAlg = GradientDescent.builder()
-                .learningRate(0.72)
+                .learningRate(0.99)
                 .regularizationRate(.00008)
                 .batchSize(80)
                 .build();
