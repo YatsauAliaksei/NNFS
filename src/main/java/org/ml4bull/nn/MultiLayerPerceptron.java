@@ -81,17 +81,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
                 .mapToDouble(data -> calculateAndGetItemError(data.getInput(), data.getOutput()));
         double error = run(isParallel, ds);
 
-        if (optAlg.hasError())
-            optimize();
-
         return -error / dataSize;
-    }
-
-    private double run(boolean isParallel, DoubleStream ds) {
-        if (isParallel)
-            ds = ds.parallel();
-
-        return ds.sum();
     }
 
     private double train(double[][] data, double[][] expected, boolean isParallel) {
@@ -101,10 +91,14 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
                 .mapToDouble(i -> calculateAndGetItemError(data[i], expected[i]));
         double error = run(isParallel, ds);
 
-        if (optAlg.hasError())
-            optimize();
-
         return -error / dataSize;
+    }
+
+    private double run(boolean isParallel, DoubleStream ds) {
+        if (isParallel)
+            ds = ds.parallel();
+
+        return ds.sum();
     }
 
     @SneakyThrows(InterruptedException.class)
