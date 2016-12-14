@@ -1,6 +1,7 @@
 package org.ml4bull.nn.layer;
 
 import org.ml4bull.algorithm.ActivationFunction;
+import org.ml4bull.algorithm.DropoutRegularization;
 import org.ml4bull.matrix.MatrixOperations;
 import org.ml4bull.nn.Neuron;
 import org.ml4bull.util.Factory;
@@ -11,16 +12,23 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class HiddenNeuronLayer implements NeuronLayer {
+    protected boolean isDropoutEnabled = true;
     protected List<Neuron> neurons;
     protected ActivationFunction activationFunction;
     protected ThreadLocal<double[]> lastResult = new ThreadLocal<>();
     protected ThreadLocal<double[]> lastInput = new ThreadLocal<>();
+    private DropoutRegularization dropoutRegularization = new DropoutRegularization(0.5);
 
     public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction) {
         neurons = IntStream.range(0, neuronsCount)
                 .mapToObj(i -> new Neuron())
                 .collect(Collectors.toList());
         this.activationFunction = activationFunction;
+    }
+
+    public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction, boolean isDropoutEnabled) {
+        this(neuronsCount, activationFunction);
+        this.isDropoutEnabled = isDropoutEnabled;
     }
 
     public double[] forwardPropagation(double[] f) {
@@ -37,7 +45,12 @@ public class HiddenNeuronLayer implements NeuronLayer {
             rawResults[i] = n.calculate();
         });
 
-        lastResult.set(activationFunction.activate(rawResults));
+        double[] afterDropout = rawResults;
+        if (isDropoutEnabled) {
+            afterDropout = dropoutRegularization.dropout(rawResults);
+        }
+
+        lastResult.set(activationFunction.activate(afterDropout));
         return lastResult.get();
     }
 

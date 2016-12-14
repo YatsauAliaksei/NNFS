@@ -20,6 +20,8 @@ public class GradientDescent implements OptimizationAlgorithm {
     private double learningRate;
     @Getter
     private AtomicInteger counter;
+    @Getter
+    private boolean withRegularization;
 
     @Override
     public boolean isLimitReached() {
@@ -40,6 +42,7 @@ public class GradientDescent implements OptimizationAlgorithm {
                 .forEach(w -> {
                     // omit bias regularization
                     double regularization = w == 0 ? 0 : regularizationRate * weights[w];
+                    if (!withRegularization) regularization = 0;
                     weights[w] -= learningRate * (weightsError[w] + regularization) / batchSize;
                 });
     }

@@ -1,11 +1,14 @@
 package org.ml4bull.nn.layer;
 
+import org.ml4bull.algorithm.DropoutRegularization;
 import org.ml4bull.nn.Neuron;
 
 import java.util.List;
 
 public class InputNeuronLayer implements NeuronLayer {
     private int inputSize;
+    private boolean isDropEnabled = true;
+    private DropoutRegularization dropoutRegularization = new DropoutRegularization(0.005);
 
     public InputNeuronLayer(int input) {
         this.inputSize = input;
@@ -13,7 +16,12 @@ public class InputNeuronLayer implements NeuronLayer {
 
     @Override
     public double[] forwardPropagation(double[] inValues) {
-        return inValues;
+        double[] result = inValues;
+
+        if (isDropEnabled)
+            result = dropoutRegularization.dropout(inValues);
+
+        return result;
     }
 
     @Override

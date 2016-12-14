@@ -8,8 +8,8 @@ public class StepFunction implements ActivationFunction {
 
     }
 
-    public StepFunction(double treshold) {
-        this.threshold = treshold;
+    public StepFunction(double threshold) {
+        this.threshold = threshold;
     }
 
     @Override

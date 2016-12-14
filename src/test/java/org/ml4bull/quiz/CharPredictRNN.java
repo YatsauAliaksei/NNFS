@@ -4,16 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.ml4bull.algorithm.GradientDescent;
-import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.data.WebBandog;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
-import org.ml4bull.nn.layer.HiddenNeuronLayer;
 import org.ml4bull.nn.layer.RecurrentNeuronLayer;
 
 import java.util.*;
+
 
 @Slf4j
 public class CharPredictRNN {
@@ -22,8 +21,9 @@ public class CharPredictRNN {
     public void predictNextChars() {
         WebBandog webBandog = new WebBandog();
         String pageURL = "https://www.oxforddictionaries.com";
-//        Set<String> words = webBandog.findWords(pageURL, 100, 10);
-        Set<String> words = new HashSet<>();
+        Set<String> words = webBandog.findWords(pageURL, 30, 4);
+        System.out.println(Objects.toString(words));
+//        Set<String> words = new HashSet<>();
         String w1 = "hello";
         String w2 = "father";
         String w3 = "table";
@@ -32,32 +32,43 @@ public class CharPredictRNN {
         words.add(w3);
 
 
+
         MultiLayerPerceptron mlp = getNN();
-        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction()));
-        mlp.addHiddenLayer(new RecurrentNeuronLayer(26, null));
+//        mlp.addHiddenLayer(new HiddenNeuronLayer(50, new SigmoidFunction()));
+//        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction()));
+//        mlp.addHiddenLayer(new HiddenNeuronLayer(7, new SigmoidFunction()));
+        mlp.addHiddenLayer(new RecurrentNeuronLayer(7, null));
 
         double error;
         int epoch = 0;
         double maxError;
+        double avgError;
+        here:
         do {
             epoch++;
+            error = 0;
             maxError = 0;
+            String maxErrorWord = "";
             for (String word : words) {
-                log.info("Word: {}", word);
 
                 DataSet ds = createDataSetFromWord(word);
-                error = mlp.train(ds, false);
-                if (Double.isNaN(error)) {
-                    break;
+                double lastCharError = mlp.train(ds, false);
+                if (Double.isNaN(lastCharError)) {
+                    log.info("Word: {}", word);
+                    log.error("NaN error...");
+                    break here;
                 }
-                if (error > maxError) {
-                    maxError = error;
+                if (lastCharError > maxError) {
+                    maxError = lastCharError;
+                    maxErrorWord = word;
                 }
-
-                log.info("Epoch {} | Error: {}", epoch, error);
-                log.info("Max error {}", maxError);
+                error += lastCharError;
             }
-        } while (Double.compare(maxError, 0.6) == 1);
+            avgError = error / words.size();
+
+            log.info(String.format("Epoch %5d | Max Error: %.2f | word: %11s | AvgError: %.2f", epoch, maxError, maxErrorWord, avgError));
+//            log.info("Max error {}", maxError);
+        } while (avgError > 0.4);
 
         predict(mlp, w1);
         predict(mlp, w2);
@@ -85,7 +96,19 @@ public class CharPredictRNN {
                 return (char) (97 + i);
             }
         }
-        return '-';
+        if (arr[findMax(arr)] < 0.35) return '-';
+
+        return (char) (findMax(arr) + 97);
+    }
+
+    private int findMax(double[] arr) {
+        int maxValueIndex = 0;
+        for (int i = 0; i < arr.length - 1; i++) {
+            if (arr[maxValueIndex] < arr[i + 1]) {
+                maxValueIndex = i + 1;
+            }
+        }
+        return maxValueIndex;
     }
 
     @NotNull
@@ -103,9 +126,8 @@ public class CharPredictRNN {
 
     private MultiLayerPerceptron getNN() {
         GradientDescent optAlg = GradientDescent.builder()
-                .learningRate(0.99)
-                .regularizationRate(.00008)
-                .batchSize(80)
+                .learningRate(1.8)
+                .batchSize(20)
                 .build();
 
         return MultiLayerPerceptron.builder()

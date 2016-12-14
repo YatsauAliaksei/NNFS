@@ -48,6 +48,19 @@ public class MatrixOperationsSimple implements MatrixOperations {
     }
 
     @Override
+    public double[] scalarMultiply(double[] matrix1, double[] matrix2) {
+        if (matrix1.length != matrix2.length)
+            throw new IllegalArgumentException("Row number of first matrix should be equal to column number of second matrix.");
+
+        double[] result = new double[matrix1.length];
+        for (int i = 0; i < matrix1.length; i++) {
+            result[i] = matrix1[i] * matrix2[i];
+        }
+
+        return result;
+    }
+
+    @Override
     public double[][] multiply(double[][] matrix1, double[][] matrix2) {
         if (matrix1[0].length != matrix2.length)
             throw new IllegalArgumentException("Row number of first matrix should be equal to column number of second matrix.");

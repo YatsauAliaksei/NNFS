@@ -27,4 +27,9 @@ public class MLUtils {
         ThreadLocalRandom tlr = ThreadLocalRandom.current();
         return tlr.doubles(size, -0.5, 0.5).toArray();
     }
+
+    public static double[] getRandomDropout(int size) {
+        ThreadLocalRandom tlr = ThreadLocalRandom.current();
+        return tlr.doubles(size, 0, 1).toArray();
+    }
 }

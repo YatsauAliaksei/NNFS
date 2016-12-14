@@ -1,6 +1,7 @@
 package org.ml4bull.nn.layer;
 
 import com.google.common.util.concurrent.AtomicDoubleArray;
+import lombok.extern.slf4j.Slf4j;
 import org.ml4bull.algorithm.ActivationFunction;
 import org.ml4bull.algorithm.HyperbolicTangentFunction;
 import org.ml4bull.matrix.MatrixOperations;
@@ -10,6 +11,7 @@ import org.ml4bull.util.Factory;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class RecurrentNeuronLayer extends HiddenNeuronLayer {
 
     private List<double[]> memory = new ArrayList<>();
@@ -21,6 +23,7 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
      */
     public RecurrentNeuronLayer(int neuronsCount, ActivationFunction unused) {
         super(neuronsCount, new HyperbolicTangentFunction());
+        isDropoutEnabled = false;
         memory.add(new double[neuronsCount]);
     }
 
@@ -51,11 +54,10 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
         MatrixOperations mo = Factory.getMatrixOperations();
         mo.scalarMultiply(previousError, 1.0 / memory.size());
 
-        // Take average of all error in neuron.
         for (Neuron neuron : neurons) {
             AtomicDoubleArray weightsError = neuron.getWeightsError();
             for (int i = 0; i < weightsError.length(); i++) {
-                weightsError.set(i, weightsError.get(i) / memory.size());
+                weightsError.set(i, weightsError.get(i));
             }
         }
 

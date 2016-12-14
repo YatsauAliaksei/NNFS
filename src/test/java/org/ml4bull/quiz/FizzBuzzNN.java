@@ -4,10 +4,12 @@ import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.ml4bull.algorithm.GradientDescent;
+import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
+import org.ml4bull.nn.layer.HiddenNeuronLayer;
 
 import java.util.Arrays;
 
@@ -21,8 +23,7 @@ public class FizzBuzzNN {
         DataSet trainSet = fb.getTrainSet();
 
         GradientDescent optAlg = GradientDescent.builder()
-                .learningRate(.12)
-                .regularizationRate(.007)
+                .learningRate(1.2)
                 .batchSize(80)
                 .build();
 
@@ -33,12 +34,14 @@ public class FizzBuzzNN {
                 .optAlg(optAlg)
                 .build();
 
+        sp.addHiddenLayer(new HiddenNeuronLayer(20, new SigmoidFunction()));
+
         double error;
         int epoch = 0;
         do {
             error = sp.train(trainSet, true);
             log.info("Epoch: {} | Error: {}", ++epoch, +error);
-        } while (error > 0.2);
+        } while (error > 1e-1);
 
         DataSet testSet = fb.getTestSet();
         sp.classify(testSet, false, (i, calc, ideal) -> System.out.println(backConvert(calc, i)));

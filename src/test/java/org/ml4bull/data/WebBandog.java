@@ -20,6 +20,7 @@ public class WebBandog {
 
     public Set<String> findWords(String startPage, int count, int maxCharLength) {
         final Set<String> words = new HashSet<>(count + 1, 1);
+        final Set<String> results = new HashSet<>(count + 1, 1);
         Deque<String> queue = new ConcurrentLinkedDeque<>();
         queue.add(startPage);
 
@@ -34,7 +35,7 @@ public class WebBandog {
                 continue;
             }
 
-            words.addAll(words.parallelStream()
+            results.addAll(words.parallelStream()
                     .filter(w -> w.trim().length() <= maxCharLength && w.trim().length() > 2)
                     .collect(Collectors.toSet()));
 
@@ -46,7 +47,7 @@ public class WebBandog {
             queue.addAll(s);
         }
 
-        return words;
+        return results;
     }
 
     private Document collectWords(String pageURL, Set<String> words) {

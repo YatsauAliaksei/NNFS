@@ -22,13 +22,19 @@ public class MazeNN {
         DataSet trainSet = mazeNN.getTrainSet();
 
         GradientDescent optAlg = GradientDescent.builder()
-                .batchSize(trainSet.getDataSetSize())
-                .learningRate(5e-1)
-                .regularizationRate(11e-1).build();
+                .batchSize(80)
+                .learningRate(4e-1)
+                .build();
 
-        MultiLayerPerceptron sp = new MultiLayerPerceptron(100, 1, optAlg, new SigmoidFunction());
-        sp.addHiddenLayer(new HiddenNeuronLayer(10, new SigmoidFunction()));
-        sp.addHiddenLayer(new HiddenNeuronLayer(10, new SigmoidFunction()));
+        MultiLayerPerceptron sp = MultiLayerPerceptron.builder()
+                .input(100)
+                .output(1)
+                .outActFunc(new SigmoidFunction())
+                .optAlg(optAlg)
+                .build();
+
+        sp.addHiddenLayer(new HiddenNeuronLayer(20, new SigmoidFunction()));
+        sp.addHiddenLayer(new HiddenNeuronLayer(20, new SigmoidFunction()));
 
         double error;
         int epoch = 0;
@@ -36,7 +42,7 @@ public class MazeNN {
             long start = nanoTime();
             error = sp.train(trainSet, true);
             System.out.println("Epoch: " + ++epoch + " | Error: " + error + " - " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
-        } while (error > 5e-1);
+        } while (error > 35e-2);
 
         DataSet testSet = mazeNN.getTestSet();
         sp.classify(testSet, false, mazeNN.getResultProcessor());

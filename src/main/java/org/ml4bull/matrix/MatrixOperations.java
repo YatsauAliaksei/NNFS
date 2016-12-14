@@ -40,6 +40,8 @@ public interface MatrixOperations {
      */
     double multiply(double[] matrix1, double[] matrix2);
 
+    double[] scalarMultiply(double[] matrix1, double[] matrix2);
+
     double[][] multiply(double[][] matrix1, double[][] matrix2);
 
     double[] multiplySingleDim(double[][] matrix1, double[] matrix2);
