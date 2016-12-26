@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 
 @Builder
 public class GradientDescent implements OptimizationAlgorithm {
@@ -38,13 +37,47 @@ public class GradientDescent implements OptimizationAlgorithm {
 
     @Override
     public void optimizeWeights(double[] weights, double[] weightsError) {
-        IntStream.range(0, weightsError.length)
-                .forEach(w -> {
-                    // omit bias regularization
-                    double regularization = w == 0 ? 0 : regularizationRate * weights[w];
-                    if (!withRegularization) regularization = 0;
-                    weights[w] -= learningRate * (weightsError[w] + regularization) / batchSize;
-                });
+//        rmsProp(weights, weightsError);
+
+        adam(weights, weightsError);
+    }
+
+
+    private void adam(double[] weights, double[] weightsError) {
+        double eps = 1e-8;
+        double beta1 = 9e-1;
+        double beta2 = 999e-3;
+        double m = 0;
+        double v = 0;
+
+        // adam
+        for (int w = 0; w < weightsError.length; w++) {
+            m = beta1 * m + (1 - beta1) * weightsError[w];
+            v = beta2 * v + (1 - beta2) * Math.pow(weightsError[w], 2);
+
+            // omit bias regularization
+            double regularization = w == 0 ? 0 : regularizationRate * weights[w];
+            if (!withRegularization) regularization = 0;
+
+            weights[w] -= learningRate * (m + regularization) / (Math.sqrt(v) + eps) / batchSize;
+        }
+    }
+
+    private void rmsProp(double[] weights, double[] weightsError) {
+        double cache = 0;
+        double eps = 1e-4;
+        double decay_rate = 9e-1;
+
+        // RMSprop
+        for (int w = 0; w < weightsError.length; w++) {
+            cache = decay_rate * cache + (1 - decay_rate) * Math.pow(weightsError[w], 2);
+
+            // omit bias regularization
+            double regularization = w == 0 ? 0 : regularizationRate * weights[w];
+            if (!withRegularization) regularization = 0;
+
+            weights[w] -= learningRate * (weightsError[w] + regularization) / (Math.sqrt(cache) + eps) / batchSize;
+        }
     }
 
     public static class GradientDescentBuilder {

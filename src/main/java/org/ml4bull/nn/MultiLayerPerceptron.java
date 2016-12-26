@@ -1,6 +1,5 @@
 package org.ml4bull.nn;
 
-import com.google.common.util.concurrent.AtomicDoubleArray;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -133,17 +132,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     }
 
     private void optimize() {
-        perceptronLayers.stream()
-                .flatMap(l -> l.getNeurons().stream())
-                .forEach(neuron -> {
-                    double[] weights = neuron.getWeights();
-                    AtomicDoubleArray weightsError = neuron.getWeightsError();
-                    double[] we = IntStream.range(0, weightsError.length()).mapToDouble(weightsError::get).toArray();
-
-                    optAlg.optimizeWeights(weights, we);
-
-                    neuron.resetErrorWeights();
-                });
+        perceptronLayers.forEach(l -> l.optimizeWeights(optAlg));
     }
 
     private double itemCostFunction(double[] calculated, double[] expected) {

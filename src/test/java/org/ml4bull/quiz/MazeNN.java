@@ -22,6 +22,7 @@ public class MazeNN {
         DataSet trainSet = mazeNN.getTrainSet();
 
         GradientDescent optAlg = GradientDescent.builder()
+                .learningRate(0.8)
                 .batchSize(80)
                 .learningRate(4e-1)
                 .build();

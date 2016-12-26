@@ -4,11 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.ml4bull.algorithm.GradientDescent;
+import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.data.WebBandog;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
+import org.ml4bull.nn.layer.HiddenNeuronLayer;
 import org.ml4bull.nn.layer.RecurrentNeuronLayer;
 
 import java.util.*;
@@ -21,23 +23,27 @@ public class CharPredictRNN {
     public void predictNextChars() {
         WebBandog webBandog = new WebBandog();
         String pageURL = "https://www.oxforddictionaries.com";
-        Set<String> words = webBandog.findWords(pageURL, 30, 4);
-        System.out.println(Objects.toString(words));
-//        Set<String> words = new HashSet<>();
-        String w1 = "hello";
-        String w2 = "father";
-        String w3 = "table";
+//        Set<String> words = webBandog.findWords(pageURL, 30, 5);
+//        System.out.println(Objects.toString(words));
+        Set<String> words = new HashSet<>();
+//        String w1 = "hello";
+        String w1 = "hellofathetable";
+//        String w2 = "abcdefghiklmnop";
+//        String w3 = "howareyoumanoop";
+//        String w2 = "fathe";
+//        String w3 = "table";
         words.add(w1);
-        words.add(w2);
-        words.add(w3);
+//        words.add(w2);
+//        words.add(w3);
 
 
 
         MultiLayerPerceptron mlp = getNN();
-//        mlp.addHiddenLayer(new HiddenNeuronLayer(50, new SigmoidFunction()));
-//        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction()));
-//        mlp.addHiddenLayer(new HiddenNeuronLayer(7, new SigmoidFunction()));
-        mlp.addHiddenLayer(new RecurrentNeuronLayer(7, null));
+//        mlp.addHiddenLayer(new HiddenNeuronLayer(7, new HyperbolicTangentFunction()));
+//        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
+//        mlp.addHiddenLayer(new HiddenNeuronLayer(7, new LiniarFunction(), false));
+        mlp.addHiddenLayer(new RecurrentNeuronLayer(26, null));
+        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
 
         double error;
         int epoch = 0;
@@ -71,8 +77,8 @@ public class CharPredictRNN {
         } while (avgError > 0.4);
 
         predict(mlp, w1);
-        predict(mlp, w2);
-        predict(mlp, w3);
+//        predict(mlp, w2);
+//        predict(mlp, w3);
     }
 
     @NotNull
@@ -117,7 +123,7 @@ public class CharPredictRNN {
         double[][] input = new double[list.size()][];
         double[][] output = new double[list.size()][];
         for (int i = 0; i < list.size(); i++) {
-            input[i] = list.get(i);
+            input[i] = fromBinToDoubleArr(list.get(i));
             output[i] = fromBinToDoubleArr(i != list.size() - 1 ? list.get(i + 1) : new double[25]);
         }
 
@@ -126,13 +132,13 @@ public class CharPredictRNN {
 
     private MultiLayerPerceptron getNN() {
         GradientDescent optAlg = GradientDescent.builder()
-                .learningRate(1.8)
-                .batchSize(20)
+                .learningRate(0.01)
+                .batchSize(15)
                 .build();
 
         return MultiLayerPerceptron.builder()
                 .outActFunc(new SoftmaxFunction())
-                .input(7)
+                .input(26)
                 .output(26)
                 .optAlg(optAlg).build();
     }

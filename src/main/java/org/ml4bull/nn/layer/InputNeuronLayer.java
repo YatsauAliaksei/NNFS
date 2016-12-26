@@ -1,6 +1,7 @@
 package org.ml4bull.nn.layer;
 
 import org.ml4bull.algorithm.DropoutRegularization;
+import org.ml4bull.algorithm.OptimizationAlgorithm;
 import org.ml4bull.nn.Neuron;
 
 import java.util.List;
@@ -27,6 +28,11 @@ public class InputNeuronLayer implements NeuronLayer {
     @Override
     public double[] backPropagation(double[] previousError) {
         return new double[0];
+    }
+
+    @Override
+    public void optimizeWeights(OptimizationAlgorithm unused) {
+        // no-op
     }
 
     @Override

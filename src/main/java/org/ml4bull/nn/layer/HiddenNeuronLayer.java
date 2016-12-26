@@ -1,7 +1,9 @@
 package org.ml4bull.nn.layer;
 
+import com.google.common.util.concurrent.AtomicDoubleArray;
 import org.ml4bull.algorithm.ActivationFunction;
 import org.ml4bull.algorithm.DropoutRegularization;
+import org.ml4bull.algorithm.OptimizationAlgorithm;
 import org.ml4bull.matrix.MatrixOperations;
 import org.ml4bull.nn.Neuron;
 import org.ml4bull.util.Factory;
@@ -33,17 +35,9 @@ public class HiddenNeuronLayer implements NeuronLayer {
 
     public double[] forwardPropagation(double[] f) {
         lastInput.set(f);
-        double[] b = new double[f.length + 1];
-        b[0] = 1;
-        System.arraycopy(f, 0, b, 1, f.length);
 
-        double[] rawResults = new double[neurons.size()];
-
-        IntStream.range(0, neurons.size()).forEach(i -> {
-            Neuron n = neurons.get(i);
-            n.setFeatures(b);
-            rawResults[i] = n.calculate();
-        });
+        double[] b = enrichFeatureWithBias(f);
+        double[] rawResults = calculateRawResult(b);
 
         double[] afterDropout = rawResults;
         if (isDropoutEnabled) {
@@ -54,34 +48,60 @@ public class HiddenNeuronLayer implements NeuronLayer {
         return lastResult.get();
     }
 
+    protected double[] enrichFeatureWithBias(double[] f) {
+        double[] b = new double[f.length + 1];
+        b[0] = 1;
+        System.arraycopy(f, 0, b, 1, f.length);
+        return b;
+    }
+
+    protected double[] calculateRawResult(double[] b) {
+        double[] rawResults = new double[neurons.size()];
+
+        IntStream.range(0, neurons.size()).forEach(i -> {
+            Neuron n = neurons.get(i);
+            n.setFeatures(b);
+            rawResults[i] = n.calculate();
+        });
+        return rawResults;
+    }
+
     @Override
     public double[] backPropagation(double[] previousError) {
-        calculateWeightsError(previousError);
+        calculateAndSaveDeltaError(previousError);
 
-        // prepare
+        return calculateLayerError(previousError);
+    }
+
+    protected double[] calculateLayerError(double[] previousError) {
         // layer weights matrix
+        double[][] theta = createLayerWeightMatrix();
+
+        MatrixOperations mo = Factory.getMatrixOperations();
+        // calculating layer error
+        double[][] thetaT = mo.transpose(theta);
+        double[] e = mo.multiplySingleDim(thetaT, previousError);
+        double[] layerError = new double[e.length];
+
+        double[] d = activationFunction.derivative(lastInput.get());
+
+        IntStream.range(0, layerError.length).forEach(err -> layerError[err] = e[err] * d[err]);
+
+        return layerError;
+    }
+
+    private double[][] createLayerWeightMatrix() {
         double[][] theta = new double[neurons.size()][];
 
         IntStream.range(0, neurons.size()).forEach(i -> {
             double[] weights = neurons.get(i).getWeights();
             theta[i] = Arrays.copyOfRange(weights, 1, weights.length);
         });
-
-        MatrixOperations mo = Factory.getMatrixOperations();
-        // calculating layer error
-        double[][] thetaT = mo.transpose(theta);
-        double[] e = mo.multiplySingleDim(thetaT, previousError);
-        double[] currentError = new double[e.length];
-
-        double[] a = activationFunction.derivative(lastInput.get());
-
-        IntStream.range(0, currentError.length).forEach(d -> currentError[d] = e[d] * a[d]);
-
-        return currentError;
+        return theta;
     }
 
     // Theta T x E. Multiply weights on previous layer error.
-    protected void calculateWeightsError(double[] error) {
+    protected void calculateAndSaveDeltaError(double[] error) {
         IntStream.range(0, neurons.size()).forEach(i -> {
             Neuron neuron = neurons.get(i);
             double[] we = new double[neuron.getWeights().length];
@@ -90,6 +110,20 @@ public class HiddenNeuronLayer implements NeuronLayer {
                 we[t] = error[i] * lastInput.get()[t - 1]; // calculate current layer error delta
             }
             neuron.addWeightsError(we);
+        });
+    }
+
+    @Override
+    public void optimizeWeights(OptimizationAlgorithm optAlg) {
+        neurons.forEach(neuron -> {
+            double[] weights = neuron.getWeights();
+            // sum of gradient errors
+            AtomicDoubleArray weightsError = neuron.getWeightsError();
+            double[] we = IntStream.range(0, weightsError.length()).mapToDouble(weightsError::get).toArray();
+
+            optAlg.optimizeWeights(weights, we);
+
+            neuron.resetErrorWeights();
         });
     }
 
