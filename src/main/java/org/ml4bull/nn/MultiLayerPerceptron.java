@@ -4,7 +4,7 @@ import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.ml4bull.algorithm.ActivationFunction;
-import org.ml4bull.algorithm.OptimizationAlgorithm;
+import org.ml4bull.algorithm.optalg.OptimizationAlgorithm;
 import org.ml4bull.nn.data.Data;
 import org.ml4bull.nn.data.DataSet;
 import org.ml4bull.nn.data.Printer;

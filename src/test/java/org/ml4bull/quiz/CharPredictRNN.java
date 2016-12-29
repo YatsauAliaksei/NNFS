@@ -3,14 +3,14 @@ package org.ml4bull.quiz;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
-import org.ml4bull.algorithm.GradientDescent;
-import org.ml4bull.algorithm.SigmoidFunction;
+import org.ml4bull.algorithm.HyperbolicTangentFunction;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
+import org.ml4bull.algorithm.optalg.GradientDescent;
+import org.ml4bull.algorithm.optalg.RMSPropGradientDescent;
 import org.ml4bull.data.WebBandog;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
-import org.ml4bull.nn.layer.HiddenNeuronLayer;
 import org.ml4bull.nn.layer.RecurrentNeuronLayer;
 
 import java.util.*;
@@ -26,24 +26,21 @@ public class CharPredictRNN {
 //        Set<String> words = webBandog.findWords(pageURL, 30, 5);
 //        System.out.println(Objects.toString(words));
         Set<String> words = new HashSet<>();
-//        String w1 = "hello";
-        String w1 = "hellofathetable";
+        String w1 = "hel";
+//        String w1 = "hellofathetable";
 //        String w2 = "abcdefghiklmnop";
 //        String w3 = "howareyoumanoop";
-//        String w2 = "fathe";
-//        String w3 = "table";
+
         words.add(w1);
 //        words.add(w2);
 //        words.add(w3);
 
-
-
         MultiLayerPerceptron mlp = getNN();
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(7, new HyperbolicTangentFunction()));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
-//        mlp.addHiddenLayer(new HiddenNeuronLayer(7, new LiniarFunction(), false));
-        mlp.addHiddenLayer(new RecurrentNeuronLayer(26, null));
-        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
+//        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new LiniarFunction(), false));
+        mlp.addHiddenLayer(new RecurrentNeuronLayer(26, new HyperbolicTangentFunction(), 3));
+//        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
 
         double error;
         int epoch = 0;
@@ -73,12 +70,24 @@ public class CharPredictRNN {
             avgError = error / words.size();
 
             log.info(String.format("Epoch %5d | Max Error: %.2f | word: %11s | AvgError: %.2f", epoch, maxError, maxErrorWord, avgError));
-//            log.info("Max error {}", maxError);
         } while (avgError > 0.4);
 
         predict(mlp, w1);
 //        predict(mlp, w2);
 //        predict(mlp, w3);
+    }
+
+    private MultiLayerPerceptron getNN() {
+        GradientDescent optAlg = RMSPropGradientDescent.builder()
+                .learningRate(0.05)
+                .batchSize(3)
+                .build();
+
+        return MultiLayerPerceptron.builder()
+                .outActFunc(new SoftmaxFunction())
+                .input(26)
+                .output(26)
+                .optAlg(optAlg).build();
     }
 
     @NotNull
@@ -123,6 +132,7 @@ public class CharPredictRNN {
         double[][] input = new double[list.size()][];
         double[][] output = new double[list.size()][];
         for (int i = 0; i < list.size(); i++) {
+//            input[i] = list.get(i);
             input[i] = fromBinToDoubleArr(list.get(i));
             output[i] = fromBinToDoubleArr(i != list.size() - 1 ? list.get(i + 1) : new double[25]);
         }
@@ -130,21 +140,12 @@ public class CharPredictRNN {
         return new DataSet(input, output);
     }
 
-    private MultiLayerPerceptron getNN() {
-        GradientDescent optAlg = GradientDescent.builder()
-                .learningRate(0.01)
-                .batchSize(15)
-                .build();
-
-        return MultiLayerPerceptron.builder()
-                .outActFunc(new SoftmaxFunction())
-                .input(26)
-                .output(26)
-                .optAlg(optAlg).build();
-    }
-
     @Test
     public void tes() {
+        List<double[]> abc = wordToCharVector("abc");
+        for (double[] c : abc) {
+            System.out.println(Arrays.toString(c));
+        }
         System.out.println((int) 'a' - 97);
         System.out.println((int) 'z' - 97);
         System.out.println(Integer.toBinaryString('a'));
@@ -162,7 +163,7 @@ public class CharPredictRNN {
         double[] d = new double[26];
         int i = fromBinToInt(bin);
 
-        if (i == -1) {
+        if (i < 0) {
             return d;
         }
 

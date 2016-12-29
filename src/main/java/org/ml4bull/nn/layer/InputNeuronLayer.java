@@ -1,7 +1,7 @@
 package org.ml4bull.nn.layer;
 
 import org.ml4bull.algorithm.DropoutRegularization;
-import org.ml4bull.algorithm.OptimizationAlgorithm;
+import org.ml4bull.algorithm.optalg.OptimizationAlgorithm;
 import org.ml4bull.nn.Neuron;
 
 import java.util.List;

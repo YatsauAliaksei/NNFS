@@ -1,6 +1,5 @@
 package org.ml4bull.algorithm;
 
-
 public class SoftmaxFunction implements ActivationFunction {
 
     @Override
@@ -23,7 +22,6 @@ public class SoftmaxFunction implements ActivationFunction {
 
     @Override
     public double[] derivative(double[] lastInput) {
-        // todo
         double[] a = new double[lastInput.length];
         for (int s = 0; s < a.length; s++)
             a[s] = (1 - lastInput[s]) * lastInput[s];

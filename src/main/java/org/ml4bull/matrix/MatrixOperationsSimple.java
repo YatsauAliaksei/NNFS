@@ -149,4 +149,12 @@ public class MatrixOperationsSimple implements MatrixOperations {
         return true;
     }
 
+    @Override
+    public double[] concatenate(double[] m1, double[] m2) {
+        double[] result = new double[m1.length + m2.length];
+        System.arraycopy(m1, 0, result, 0, m1.length);
+        System.arraycopy(m2, 0, result, m1.length, m2.length);
+        return result;
+    }
+
 }

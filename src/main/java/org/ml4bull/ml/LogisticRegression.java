@@ -1,8 +1,8 @@
 package org.ml4bull.ml;
 
 import lombok.Builder;
-import org.ml4bull.algorithm.GradientDescent;
 import org.ml4bull.algorithm.SigmoidFunction;
+import org.ml4bull.algorithm.optalg.GradientDescent;
 import org.ml4bull.annotation.Untested;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;

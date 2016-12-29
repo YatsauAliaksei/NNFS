@@ -3,7 +3,7 @@ package org.ml4bull.nn.layer;
 import com.google.common.util.concurrent.AtomicDoubleArray;
 import org.ml4bull.algorithm.ActivationFunction;
 import org.ml4bull.algorithm.DropoutRegularization;
-import org.ml4bull.algorithm.OptimizationAlgorithm;
+import org.ml4bull.algorithm.optalg.OptimizationAlgorithm;
 import org.ml4bull.matrix.MatrixOperations;
 import org.ml4bull.nn.Neuron;
 import org.ml4bull.util.Factory;

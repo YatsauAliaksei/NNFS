@@ -1,4 +1,4 @@
-package org.ml4bull.algorithm;
+package org.ml4bull.algorithm.optalg;
 
 public interface OptimizationAlgorithm {
     boolean isLimitReached();

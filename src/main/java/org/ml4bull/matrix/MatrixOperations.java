@@ -57,4 +57,6 @@ public interface MatrixOperations {
     double[] sum(double[] el1, double[] el2);
 
     boolean same(double[] i1, double[] i2);
+
+    double[] concatenate(double[] m1, double[] m2);
 }

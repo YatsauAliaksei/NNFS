@@ -7,6 +7,10 @@ public class Memory<T> {
     private int maxSize;
     private int size;
 
+    public Memory() {
+        this.maxSize = Integer.MAX_VALUE;
+    }
+
     public Memory(int maxSize) {
         this.maxSize = maxSize;
     }

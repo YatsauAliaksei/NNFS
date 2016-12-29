@@ -3,10 +3,11 @@ package org.ml4bull.quiz;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.ml4bull.algorithm.GradientDescent;
 import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
+import org.ml4bull.algorithm.optalg.GradientDescent;
+import org.ml4bull.algorithm.optalg.RMSPropGradientDescent;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
 import org.ml4bull.nn.layer.HiddenNeuronLayer;
@@ -22,7 +23,7 @@ public class FizzBuzzNN {
         FizzBuzzNN fb = new FizzBuzzNN();
         DataSet trainSet = fb.getTrainSet();
 
-        GradientDescent optAlg = GradientDescent.builder()
+        GradientDescent optAlg = RMSPropGradientDescent.builder()
                 .learningRate(0.5)
                 .batchSize(80)
                 .build();
