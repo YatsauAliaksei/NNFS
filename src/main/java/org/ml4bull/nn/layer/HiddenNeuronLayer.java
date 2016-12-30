@@ -22,10 +22,14 @@ public class HiddenNeuronLayer implements NeuronLayer {
     private DropoutRegularization dropoutRegularization = new DropoutRegularization(0.5);
 
     public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction) {
+        createNeurons(neuronsCount);
+        this.activationFunction = activationFunction;
+    }
+
+    protected void createNeurons(int neuronsCount) {
         neurons = IntStream.range(0, neuronsCount)
                 .mapToObj(i -> new Neuron())
                 .collect(Collectors.toList());
-        this.activationFunction = activationFunction;
     }
 
     public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction, boolean isDropoutEnabled) {

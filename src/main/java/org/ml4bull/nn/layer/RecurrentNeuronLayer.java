@@ -17,19 +17,26 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
 
     /**
      * Simple recurrent neuron net layer.
-     * @param neuronsCount - should be the same as for previous layer.
      */
-    public RecurrentNeuronLayer(int neuronsCount, ActivationFunction activationFunction, int memorySize) {
-        super(neuronsCount, activationFunction, false);
+    public RecurrentNeuronLayer(ActivationFunction activationFunction, int memorySize) {
+        super(0, activationFunction, false);
 
-        featureLayer = new HiddenNeuronLayer(neuronsCount, new LiniarFunction(), false);
         isDropoutEnabled = false;
         memory = new Memory<>(memorySize);
         memFeat = new Memory<>(memorySize);
     }
 
+    private void init(int featuresCount) {
+        if (featureLayer != null) return;
+
+        featureLayer = new HiddenNeuronLayer(featuresCount, new LiniarFunction(), false);
+        super.createNeurons(featuresCount);
+    }
+
     @Override
     public double[] forwardPropagation(double[] inValues) {
+        init(inValues.length);
+
         double[] featLayerOut = featureLayer.forwardPropagation(inValues);
         memFeat.add(featLayerOut);
 

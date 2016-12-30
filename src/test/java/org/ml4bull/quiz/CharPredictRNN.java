@@ -3,7 +3,7 @@ package org.ml4bull.quiz;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
-import org.ml4bull.algorithm.HyperbolicTangentFunction;
+import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.algorithm.optalg.GradientDescent;
@@ -26,20 +26,20 @@ public class CharPredictRNN {
 //        Set<String> words = webBandog.findWords(pageURL, 30, 5);
 //        System.out.println(Objects.toString(words));
         Set<String> words = new HashSet<>();
-        String w1 = "hel";
-//        String w1 = "hellofathetable";
-//        String w2 = "abcdefghiklmnop";
-//        String w3 = "howareyoumanoop";
+//        String w1 = "hel";
+        String w1 = "hellofathetable";
+        String w2 = "abcdefghiklmnop";
+        String w3 = "howareyoumanoop";
 
         words.add(w1);
-//        words.add(w2);
-//        words.add(w3);
+        words.add(w2);
+        words.add(w3);
 
         MultiLayerPerceptron mlp = getNN();
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(7, new HyperbolicTangentFunction()));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new LiniarFunction(), false));
-        mlp.addHiddenLayer(new RecurrentNeuronLayer(26, new HyperbolicTangentFunction(), 3));
+        mlp.addHiddenLayer(new RecurrentNeuronLayer(new SigmoidFunction(), 3));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
 
         double error;
@@ -73,8 +73,8 @@ public class CharPredictRNN {
         } while (avgError > 0.4);
 
         predict(mlp, w1);
-//        predict(mlp, w2);
-//        predict(mlp, w3);
+        predict(mlp, w2);
+        predict(mlp, w3);
     }
 
     private MultiLayerPerceptron getNN() {
