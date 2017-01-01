@@ -64,8 +64,10 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
     private double[] process(double[] data) {
         double[] v = inputLayer.forwardPropagation(data);
-        return perceptronLayers.stream()
-                .reduce(v, (d, nl) -> nl.forwardPropagation(d), (v1, v2) -> v1);
+        for (NeuronLayer layer : perceptronLayers) {
+            v = layer.forwardPropagation(v);
+        }
+        return v;
     }
 
     @Override
@@ -136,10 +138,9 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     }
 
     private double itemCostFunction(double[] calculated, double[] expected) {
-        double error = .0;
-        for (int i = 0; i < calculated.length; i++) {
-            error += expected[i] * log2(calculated[i]) + (1 - expected[i]) * log2(1 - calculated[i]);
-        }
-        return error;
+        return IntStream.range(0, calculated.length)
+                .mapToDouble(i ->
+                        expected[i] * log2(calculated[i]) + (1 - expected[i]) * log2(1 - calculated[i])
+                ).parallel().unordered().sum();
     }
 }

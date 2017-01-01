@@ -40,6 +40,16 @@ public class InputNeuronLayer implements NeuronLayer {
         return null;
     }
 
+    @Override
+    public double[] calculateRawResult(double[] b) {
+        return new double[0];
+    }
+
+    @Override
+    public double[] activate(double[] rawResults) {
+        return new double[0];
+    }
+
     public int getInputSize() {
         return inputSize;
     }

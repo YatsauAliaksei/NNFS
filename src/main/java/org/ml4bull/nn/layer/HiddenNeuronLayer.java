@@ -43,11 +43,14 @@ public class HiddenNeuronLayer implements NeuronLayer {
         double[] b = enrichFeatureWithBias(f);
         double[] rawResults = calculateRawResult(b);
 
+        return activate(rawResults);
+    }
+
+    public double[] activate(double[] rawResults) {
         double[] afterDropout = rawResults;
         if (isDropoutEnabled) {
             afterDropout = dropoutRegularization.dropout(rawResults);
         }
-
         lastResult.set(activationFunction.activate(afterDropout));
         return lastResult.get();
     }
@@ -59,7 +62,7 @@ public class HiddenNeuronLayer implements NeuronLayer {
         return b;
     }
 
-    protected double[] calculateRawResult(double[] b) {
+    public double[] calculateRawResult(double[] b) {
         double[] rawResults = new double[neurons.size()];
 
         IntStream.range(0, neurons.size()).forEach(i -> {

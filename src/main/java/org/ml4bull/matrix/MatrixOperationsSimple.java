@@ -129,7 +129,7 @@ public class MatrixOperationsSimple implements MatrixOperations {
 
     @Override
     public double[] sum(double[] el1, double[] el2) {
-        Preconditions.checkArgument(el1.length == el2.length);
+        Preconditions.checkArgument(el1.length == el2.length, "Cannot summarize to vectors with diff size.");
         double[] result = new double[el1.length];
 
         for (int i = 0; i < el1.length; i++) {

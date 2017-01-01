@@ -40,6 +40,7 @@ public class CharPredictRNN {
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new LiniarFunction(), false));
         mlp.addHiddenLayer(new RecurrentNeuronLayer(new SigmoidFunction(), 3));
+//        mlp.addHiddenLayer(new LSTMNeuronLayer(new SigmoidFunction(), 3));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
 
         double error;
@@ -79,8 +80,8 @@ public class CharPredictRNN {
 
     private MultiLayerPerceptron getNN() {
         GradientDescent optAlg = RMSPropGradientDescent.builder()
-                .learningRate(0.05)
-                .batchSize(3)
+                .learningRate(0.1)
+                .batchSize(15)
                 .build();
 
         return MultiLayerPerceptron.builder()

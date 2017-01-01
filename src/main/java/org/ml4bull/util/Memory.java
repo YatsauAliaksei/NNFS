@@ -2,6 +2,7 @@ package org.ml4bull.util;
 
 import com.google.common.base.Preconditions;
 
+
 public class Memory<T> {
     private Node latest;
     private int maxSize;

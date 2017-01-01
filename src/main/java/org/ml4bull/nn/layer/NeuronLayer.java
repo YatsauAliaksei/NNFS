@@ -13,4 +13,8 @@ public interface NeuronLayer {
     void optimizeWeights(OptimizationAlgorithm optAlg);
 
     List<Neuron> getNeurons();
+
+    double[] calculateRawResult(double[] b);
+
+    double[] activate(double[] rawResults);
 }

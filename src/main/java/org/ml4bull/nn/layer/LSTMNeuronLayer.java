@@ -2,57 +2,89 @@ package org.ml4bull.nn.layer;
 
 import org.ml4bull.algorithm.ActivationFunction;
 import org.ml4bull.algorithm.HyperbolicTangentFunction;
+import org.ml4bull.algorithm.LiniarFunction;
 import org.ml4bull.algorithm.SigmoidFunction;
+import org.ml4bull.algorithm.optalg.OptimizationAlgorithm;
 import org.ml4bull.matrix.MatrixOperations;
 import org.ml4bull.util.Factory;
 import org.ml4bull.util.Memory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class LSTMNeuronLayer extends HiddenNeuronLayer {
 
-    private NeuronLayer inputGate;
-    private NeuronLayer outputGate;
-    private NeuronLayer forgetGate;
+    private HiddenNeuronLayer inputGateFeat;
+    private HiddenNeuronLayer outputGateFeat;
+    private HiddenNeuronLayer forgetGateFeat;
+    private HiddenNeuronLayer candidateFeat;
 
-    private Memory<double[]> memory = new Memory<>(100);
-    private Memory<double[]> featureMem = new Memory<>(100);
-    private double[] candidates;
+    private HiddenNeuronLayer inputGate;
+    private HiddenNeuronLayer outputGate;
+    private HiddenNeuronLayer forgetGate;
 
-    public LSTMNeuronLayer(int neuronsCount, ActivationFunction ignored) {
-        super(neuronsCount, new HyperbolicTangentFunction(), false);
-        int concatSize = neuronsCount * 2;
-        this.inputGate = new HiddenNeuronLayer(concatSize, new SigmoidFunction(), false);
-        this.outputGate = new HiddenNeuronLayer(concatSize, new SigmoidFunction(), false);
-        this.forgetGate = new HiddenNeuronLayer(concatSize, new SigmoidFunction(), false);
-        this.candidates = new double[concatSize];
+    private Memory<double[]> memory;
+    private Memory<double[]> featureMem;
+    private double[] cellState;
+
+    private Map<HiddenNeuronLayer, HiddenNeuronLayer> lstmLayerMap;
+
+    public LSTMNeuronLayer(ActivationFunction activationFunction, int memorySize) {
+//        super(0, new SigmoidFunction(), false);
+        super(0, new HyperbolicTangentFunction(), false);
+        memory = new Memory<>(memorySize);
+        featureMem = new Memory<>(memorySize);
     }
 
-    public LSTMNeuronLayer(int neuronsCount, ActivationFunction ignored1, boolean ignored2) {
-        this(neuronsCount, null);
+    private void init(int inputSize) {
+        if (inputGate != null) return;
+
+        createNeurons(inputSize);
+        this.inputGate = new HiddenNeuronLayer(inputSize, new SigmoidFunction(), false);
+        this.outputGate = new HiddenNeuronLayer(inputSize, new SigmoidFunction(), false);
+        this.forgetGate = new HiddenNeuronLayer(inputSize, new SigmoidFunction(), false);
+
+        this.inputGateFeat = new HiddenNeuronLayer(inputSize, new LiniarFunction(), false);
+        this.outputGateFeat = new HiddenNeuronLayer(inputSize, new LiniarFunction(), false);
+        this.forgetGateFeat = new HiddenNeuronLayer(inputSize, new LiniarFunction(), false);
+        this.candidateFeat = new HiddenNeuronLayer(inputSize, new LiniarFunction(), false);
+        this.cellState = new double[inputSize];
+
+        lstmLayerMap = new HashMap<>();
+        lstmLayerMap.put(forgetGateFeat, forgetGate);
+        lstmLayerMap.put(inputGateFeat, inputGate);
+        lstmLayerMap.put(outputGateFeat, outputGate);
     }
 
     @Override
     public double[] forwardPropagation(double[] f) {
+        init(f.length);
+
         featureMem.add(f);
+
+        // calculate forget layer
+        double[] fLO = gateCalculate(forgetGateFeat, forgetGate, f);
+        // calculate input layer
+        double[] iLO = gateCalculate(inputGateFeat, inputGate, f);
+        // calculate output layer
+        double[] oLO = gateCalculate(outputGateFeat, outputGate, f);
+
         MatrixOperations mo = Factory.getMatrixOperations();
+        cellState = mo.scalarMultiply(fLO, cellState);
 
-        double[] concatValues = mo.concatenate(memory.getLast(), f);
-        // forget info
-        double[] fT = forgetGate.forwardPropagation(concatValues);
-        candidates = mo.scalarMultiply(fT, candidates);
+        // calculate new cellState
+        double[] cellStateCandidates = gateCalculate(candidateFeat, this, f);
 
-        // calculate new candidates
-        double[] newCandidates = super.forwardPropagation(concatValues);
-        // approving new candidates
-        double[] iT = inputGate.forwardPropagation(concatValues);
-        double[] approvedCandidates = mo.scalarMultiply(iT, newCandidates);
-        // save new candidate state
-        candidates = mo.sum(candidates, approvedCandidates);
+        // approving new cellState
+        double[] approvedCandidates = mo.scalarMultiply(iLO, cellStateCandidates);
+        // save new cell state
+        cellState = mo.sum(cellState, approvedCandidates);
 
         // truncating values to be between -1 / 1.
         HyperbolicTangentFunction hyperbolicTangentFunction = new HyperbolicTangentFunction();
-        double[] truncated = hyperbolicTangentFunction.activate(candidates);
-        double[] oT = outputGate.forwardPropagation(concatValues);
-        double[] hT = mo.scalarMultiply(oT, truncated);
+//        SigmoidFunction hyperbolicTangentFunction = new SigmoidFunction();
+        double[] truncated = hyperbolicTangentFunction.activate(cellState);
+        double[] hT = mo.scalarMultiply(oLO, truncated);
         memory.add(hT);
 
         return hT;
@@ -60,8 +92,56 @@ public class LSTMNeuronLayer extends HiddenNeuronLayer {
 
     @Override
     public double[] backPropagation(double[] previousError) {
+        double[] err = previousError;
+        for (Map.Entry<HiddenNeuronLayer, HiddenNeuronLayer> entry : lstmLayerMap.entrySet()) {
+            err = previousError;
+            for (int i = 1; i < memory.size(); i++) {
+                err = calculateError(entry.getKey(), entry.getValue(), i, err);
+            }
+        }
+
+        lstmLayerMap.forEach((k, v) -> {
+            k.lastInput.set(featureMem.get(featureMem.size() - 1));
+            k.calculateAndSaveDeltaError(previousError);
+        });
 
 
-        return super.backPropagation(previousError);
+        return err;
+    }
+
+    private double[] calculateError(HiddenNeuronLayer featureLayer, HiddenNeuronLayer gateLayer, int memoryIndex, double[] previousError) {
+        double[] fm = featureMem.get(memoryIndex - 1);
+        featureLayer.lastInput.set(fm);
+        featureLayer.calculateAndSaveDeltaError(previousError);
+
+        double[] m = memory.get(memoryIndex);
+        gateLayer.lastInput.set(m);
+        previousError = gateLayer.backPropagation(previousError);
+        return previousError;
+    }
+
+    private double[] gateCalculate(NeuronLayer featLayer, NeuronLayer gateLayer, double[] input) {
+        double[] fTF = featLayer.forwardPropagation(input);
+        double[] fL = enrichFeatureWithBias(getLast());
+        double[] rawResult = gateLayer.calculateRawResult(fL);
+
+        MatrixOperations mo = Factory.getMatrixOperations();
+        double[] out = mo.sum(fTF, rawResult);
+        return gateLayer.activate(out);
+    }
+
+    private double[] getLast() {
+        if (memory.size() == 0) {
+            return new double[neurons.size()];
+        }
+        return memory.getLast();
+    }
+
+    @Override
+    public void optimizeWeights(OptimizationAlgorithm optAlg) {
+        lstmLayerMap.forEach((k, v) -> {
+            k.optimizeWeights(optAlg);
+            v.optimizeWeights(optAlg);
+        });
     }
 }
