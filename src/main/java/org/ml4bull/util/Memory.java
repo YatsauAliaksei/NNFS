@@ -2,6 +2,8 @@ package org.ml4bull.util;
 
 import com.google.common.base.Preconditions;
 
+import java.util.Objects;
+
 
 public class Memory<T> {
     private Node latest;
@@ -56,6 +58,9 @@ public class Memory<T> {
     }
 
     public T getLast() {
+        if (Objects.isNull(latest)) {
+            return null;
+        }
         return latest.value;
     }
 

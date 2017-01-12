@@ -3,6 +3,7 @@ package org.ml4bull.quiz;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
+import org.ml4bull.algorithm.HyperbolicTangentFunction;
 import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
@@ -39,6 +40,7 @@ public class CharPredictRNN {
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(7, new HyperbolicTangentFunction()));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new LiniarFunction(), false));
+        mlp.addHiddenLayer(new RecurrentNeuronLayer(new HyperbolicTangentFunction(), 3));
         mlp.addHiddenLayer(new RecurrentNeuronLayer(new SigmoidFunction(), 3));
 //        mlp.addHiddenLayer(new LSTMNeuronLayer(new SigmoidFunction(), 3));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
@@ -206,5 +208,16 @@ public class CharPredictRNN {
             charArr[i] = chars[i] == '1' ? 1 : 0;
         }
         return charArr;
+    }
+
+    @Test
+    public void testes() {
+        int i = 1 << 2;
+        int i$ = 1 << 3;
+        System.out.println(i);
+        System.out.println(i$);
+        System.out.println(i | i$);
+
+        System.out.println(Integer.toBinaryString(i | i$));
     }
 }

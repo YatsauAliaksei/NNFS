@@ -117,6 +117,41 @@ public class HiddenNeuronLayer implements NeuronLayer {
                 we[t] = error[i] * lastInput.get()[t - 1]; // calculate current layer error delta
             }
             neuron.addWeightsError(we);
+            gradientCheck(we);
+        });
+    }
+
+    private boolean isGradientCheckEnable = false;
+
+    private void gradientCheck(double[] gradientDerivative) {
+        if (!isGradientCheckEnable) return;
+
+        double e = 1e-1;
+        double allowableError = 1e-4;
+
+        neurons.forEach(neuron -> {
+            double[] weights = neuron.getWeights();
+            double[] derVal = new double[weights.length];
+
+            for (int i = 0; i < weights.length; i++) {
+                double tmp = weights[i];
+
+                weights[i] += e;
+                double resultPlusE = neuron.calculate();
+
+                weights[i] = tmp - e;
+                double resultMinusE = neuron.calculate();
+
+                derVal[i] = (resultPlusE - resultMinusE) / 2 * e;
+                // return old value
+                weights[i] = tmp;
+            }
+
+            for (int i = 0; i < derVal.length; i++) {
+                if (derVal[i] - gradientDerivative[i] > allowableError) {
+                    throw new RuntimeException("Gradient error. Expected: " + derVal[i] + " Actual: " + gradientDerivative[i]);
+                }
+            }
         });
     }
 

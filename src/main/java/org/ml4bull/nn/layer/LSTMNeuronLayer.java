@@ -11,6 +11,7 @@ import org.ml4bull.util.Memory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class LSTMNeuronLayer extends HiddenNeuronLayer {
 
@@ -105,7 +106,6 @@ public class LSTMNeuronLayer extends HiddenNeuronLayer {
             k.calculateAndSaveDeltaError(previousError);
         });
 
-
         return err;
     }
 
@@ -131,10 +131,8 @@ public class LSTMNeuronLayer extends HiddenNeuronLayer {
     }
 
     private double[] getLast() {
-        if (memory.size() == 0) {
-            return new double[neurons.size()];
-        }
-        return memory.getLast();
+        return Optional.ofNullable(memory.getLast())
+                .orElse(new double[neurons.size()]);
     }
 
     @Override
