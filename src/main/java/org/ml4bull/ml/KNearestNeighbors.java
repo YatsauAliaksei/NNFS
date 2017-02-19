@@ -23,10 +23,10 @@ public class KNearestNeighbors {
     public double[] classify(Data input) {
         LowestQueue lq = new LowestQueue();
 
-        map.stream().peek(i -> {
+        map.stream().parallel().forEach(i -> {
             double ed = MathUtils.euclidianDistance(i.getInput(), input.getInput());
             lq.insert(ed, i.getOutput());
-        }).parallel();
+        });
 
         return voting(lq);
     }
@@ -70,8 +70,8 @@ public class KNearestNeighbors {
 
         private LowestQueue() {
             queue = new Item[k];
-            for (int i = 0; i < queue.length; i++) {
-                queue[i].ed = Integer.MAX_VALUE;
+            for (Item aQueue : queue) {
+                aQueue.ed = Integer.MAX_VALUE;
             }
         }
 

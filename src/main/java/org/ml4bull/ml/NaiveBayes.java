@@ -25,20 +25,17 @@ public class NaiveBayes {
         probabilities = new HashMap<>(classesCounter.length, 1f);
         classProb = new HashMap<>(classesCounter.length, 1f);
 
-        IntStream.rangeClosed(1, classesCounter.length)
-                .peek(i -> {
+        IntStream.rangeClosed(1, classesCounter.length).parallel().forEach(i -> {
                     classProb.put(i, classesCounter[i - 1] / dataSet.size());
                     double[] wp = summarizeDoubles(dataSet, Data::getInput,
                             classLabel -> MLUtils.transformClassToInt(classLabel.getOutput()) == i);
                     double totalWordAmount = Arrays.stream(wp).sum();
-                    wp = Arrays.stream(wp)
-                            .map(w -> {
+                    wp = Arrays.stream(wp).map(w -> {
                                 double p = w / totalWordAmount;
                                 return Math.log(p == 0 ? 1 : p);
-                            })
-                            .toArray();
+                            }).toArray();
                     probabilities.put(i, wp);
-                }).parallel();
+                });
     }
 
     public double[] classify(Data data) {
@@ -67,6 +64,6 @@ public class NaiveBayes {
         return dataSet.stream()
                 .filter(filter)
                 .map(function)
-                .parallel().reduce(Factory.getMatrixOperations()::sum).get();
+                .parallel().reduce(Factory.getMatrixOperations()::sum).orElseThrow(RuntimeException::new);
     }
 }

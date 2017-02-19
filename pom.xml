@@ -40,7 +40,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!--classify-->
+            <!--tests-->
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>

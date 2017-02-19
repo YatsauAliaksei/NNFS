@@ -3,9 +3,7 @@ package org.ml4bull.ml;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AtomicDoubleArray;
-import org.ml4bull.matrix.MatrixOperations;
 import org.ml4bull.nn.data.Data;
-import org.ml4bull.util.Factory;
 import org.ml4bull.util.MLUtils;
 import org.ml4bull.util.MathUtils;
 
@@ -57,7 +55,7 @@ public class DecisionTree {
         Set<Double> fl = getFeatureList(dataSet, fIndex);
         parent.fIndex = fIndex;
         parent.nodes = new ArrayList<>();
-        fl.stream().peek(f -> {
+        fl.forEach(f -> {
             List<Data> subDs = splitDataSet(dataSet, fIndex, f, 0);
             Node child = new Node();
             child.fValue = f;
@@ -76,13 +74,12 @@ public class DecisionTree {
 
     private double shannonEntropy(List<Data> dataSet) {
         AtomicInteger[] counter = new AtomicInteger[dataSet.get(0).getOutput().length];
-        MatrixOperations mo = Factory.getMatrixOperations();
 
-        dataSet.stream().peek(data -> {
+        dataSet.stream().parallel().forEach(data -> {
             double[] ca = data.getOutput();
             int c = MLUtils.transformClassToInt(ca);
             counter[c].incrementAndGet();
-        }).parallel();
+        });
 
         double shannonEnt = .0;
         for (AtomicInteger i : counter) {
@@ -105,7 +102,7 @@ public class DecisionTree {
         int numF = dataSet.get(0).getInput().length;
         DecisionTreeHelper dth = new DecisionTreeHelper();
 
-        IntStream.range(0, numF).peek(i -> {
+        IntStream.range(0, numF).parallel().forEach(i -> {
 
             Set<Double> featureList = getFeatureList(dataSet, i);
 
@@ -120,7 +117,7 @@ public class DecisionTree {
                 dth.setBestEntropy(infoGain);
                 dth.setBestFeature(i);
             }
-        }).parallel();
+        });
 
         return dth.getBestFeature();
     }
