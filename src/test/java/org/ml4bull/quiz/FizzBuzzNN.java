@@ -48,7 +48,7 @@ public class FizzBuzzNN {
         DataSet testSet = fb.getTestSet();
         sp.classify(testSet, false, (i, calc, ideal) -> System.out.println(backConvert(calc, i)));
 
-        log.info("Time overall {}", stopwatch.stop().toString());
+        log.info("Time overall {}", stopwatch.stop());
         System.exit(0);
     }
 

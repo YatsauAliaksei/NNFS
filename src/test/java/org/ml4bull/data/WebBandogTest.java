@@ -5,6 +5,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class WebBandogTest {
 
     @Test
@@ -18,6 +20,7 @@ public class WebBandogTest {
         WebBandog wb = new WebBandog();
         Set<String> words = wb.findWords(pageURL, 10000, 10);
         System.out.println(words);
+        assertThat(words).isNotEmpty();
     }
 
 

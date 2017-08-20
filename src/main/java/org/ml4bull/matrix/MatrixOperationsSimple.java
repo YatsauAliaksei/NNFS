@@ -36,8 +36,8 @@ public class MatrixOperationsSimple implements MatrixOperations {
 
     @Override
     public double multiply(double[] matrix1, double[] matrix2) {
-        if (matrix1.length != matrix2.length)
-            throw new IllegalArgumentException("Row number of first matrix should be equal to column number of second matrix.");
+        Preconditions.checkArgument(matrix1.length == matrix2.length,
+            "Row number of first matrix should be equal to column number of second matrix.");
 
         double result = 0;
         for (int i = 0; i < matrix1.length; i++) {
