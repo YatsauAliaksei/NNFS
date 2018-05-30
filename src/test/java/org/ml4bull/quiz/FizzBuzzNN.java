@@ -4,6 +4,7 @@ import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.ml4bull.algorithm.HyperbolicTangentFunction;
+import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.algorithm.optalg.GradientDescent;
@@ -35,8 +36,8 @@ public class FizzBuzzNN {
                 .optAlg(optAlg)
                 .build();
 
-//        sp.addHiddenLayer(new HiddenNeuronLayer(20, new SigmoidFunction()));
-        sp.addHiddenLayer(new HiddenNeuronLayer(20, new HyperbolicTangentFunction()));
+        sp.addHiddenLayer(new HiddenNeuronLayer(20, new SigmoidFunction()));
+//        sp.addHiddenLayer(new HiddenNeuronLayer(20, new HyperbolicTangentFunction()));
 
         double error;
         int epoch = 0;
