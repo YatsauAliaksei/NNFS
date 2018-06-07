@@ -26,12 +26,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "firstOne123bot";
+        return "";
     }
 
     @Override
     public String getBotToken() {
-        return "619899510:AAFBU5u9T4Yq7by4r4RDtXNKaIIVl3W3DHk";
+        return "";
     }
 
     public Message sendMessageToChat(long chatId, String message) throws TelegramApiException {
