@@ -10,6 +10,7 @@ import org.ml4bull.util.Factory;
 import org.ml4bull.util.Memory;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -31,8 +32,7 @@ public class LSTMNeuronLayer extends HiddenNeuronLayer {
     private Map<HiddenNeuronLayer, HiddenNeuronLayer> lstmLayerMap;
 
     public LSTMNeuronLayer(ActivationFunction activationFunction, int memorySize) {
-//        super(0, new SigmoidFunction(), false);
-        super(0, new HyperbolicTangentFunction(), false);
+        super(0, activationFunction, false);
         memory = new Memory<>(memorySize);
         featureMem = new Memory<>(memorySize);
     }
@@ -51,7 +51,7 @@ public class LSTMNeuronLayer extends HiddenNeuronLayer {
         this.candidateFeat = new HiddenNeuronLayer(inputSize, new LiniarFunction(), false);
         this.cellState = new double[inputSize];
 
-        lstmLayerMap = new HashMap<>();
+        lstmLayerMap = new LinkedHashMap<>();
         lstmLayerMap.put(forgetGateFeat, forgetGate);
         lstmLayerMap.put(inputGateFeat, inputGate);
         lstmLayerMap.put(outputGateFeat, outputGate);

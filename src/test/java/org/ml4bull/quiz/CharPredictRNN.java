@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.ml4bull.algorithm.HyperbolicTangentFunction;
-import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.algorithm.optalg.GradientDescent;
@@ -15,6 +14,8 @@ import org.ml4bull.nn.data.DataSet;
 import org.ml4bull.nn.layer.RecurrentNeuronLayer;
 
 import java.util.*;
+
+import static java.util.Arrays.stream;
 
 
 @Slf4j
@@ -27,7 +28,9 @@ public class CharPredictRNN {
 //        Set<String> words = webBandog.findWords(pageURL, 30, 5);
 //        System.out.println(Objects.toString(words));
         Set<String> words = new HashSet<>();
-//        String w1 = "hel";
+        int[] arrs = new int[] {1, 2, 3};
+//        List<int[]> coins = Arrays.asList(arrs);
+//        String w1 = "hello";
         String w1 = "hellofathetable";
         String w2 = "abcdefghiklmnop";
         String w3 = "howareyoumanoop";
@@ -41,8 +44,9 @@ public class CharPredictRNN {
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new LiniarFunction(), false));
         mlp.addHiddenLayer(new RecurrentNeuronLayer(new HyperbolicTangentFunction(), 3));
-        mlp.addHiddenLayer(new RecurrentNeuronLayer(new SigmoidFunction(), 3));
+//        mlp.addHiddenLayer(new RecurrentNeuronLayer(new SigmoidFunction(), 3));
 //        mlp.addHiddenLayer(new LSTMNeuronLayer(new SigmoidFunction(), 3));
+//        mlp.addHiddenLayer(new LSTMNeuronLayer(new HyperbolicTangentFunction(), 3));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
 
         double error;
@@ -208,16 +212,5 @@ public class CharPredictRNN {
             charArr[i] = chars[i] == '1' ? 1 : 0;
         }
         return charArr;
-    }
-
-    @Test
-    public void testes() {
-        int i = 1 << 2;
-        int i$ = 1 << 3;
-        System.out.println(i);
-        System.out.println(i$);
-        System.out.println(i | i$);
-
-        System.out.println(Integer.toBinaryString(i | i$));
     }
 }
