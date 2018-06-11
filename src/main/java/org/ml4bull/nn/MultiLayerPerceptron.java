@@ -88,8 +88,8 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     private double train(double[][] data, double[][] expected, boolean isParallel) {
         final int dataSize = data.length;
         if (dataSize == 0) {
-            log.error("DataSize could be Zero");
-            throw new RuntimeException("DataSize could be Zero");
+            log.error("DataSize couldn't be empty");
+            throw new RuntimeException("DataSize couldn't be empty");
         }
 
         DoubleStream ds = IntStream.range(0, dataSize)

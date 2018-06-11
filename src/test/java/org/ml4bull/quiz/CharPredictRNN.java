@@ -1,52 +1,60 @@
 package org.ml4bull.quiz;
 
+import com.google.common.base.Splitter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
-import org.ml4bull.algorithm.HyperbolicTangentFunction;
+import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.algorithm.optalg.GradientDescent;
 import org.ml4bull.algorithm.optalg.RMSPropGradientDescent;
-import org.ml4bull.data.WebBandog;
+import org.ml4bull.bot.TelegramBot;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
 import org.ml4bull.nn.layer.RecurrentNeuronLayer;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
 import java.util.*;
-
-import static java.util.Arrays.stream;
+import java.util.stream.Collectors;
 
 
 @Slf4j
 public class CharPredictRNN {
 
     @Test
-    public void predictNextChars() {
-        WebBandog webBandog = new WebBandog();
-        String pageURL = "https://www.oxforddictionaries.com";
+    public void predictNextChars() throws IOException {
+//        Set<String> words = shakespeareDS();
+        log.info("Data set has been created.");
+
+//        WebBandog webBandog = new WebBandog();
+//        String pageURL = "https://www.oxforddictionaries.com";
 //        Set<String> words = webBandog.findWords(pageURL, 30, 5);
 //        System.out.println(Objects.toString(words));
         Set<String> words = new HashSet<>();
-        int[] arrs = new int[] {1, 2, 3};
+//        int[] arrs = new int[] {1, 2, 3};
 //        List<int[]> coins = Arrays.asList(arrs);
-//        String w1 = "hello";
-        String w1 = "hellofathetable";
-        String w2 = "abcdefghiklmnop";
-        String w3 = "howareyoumanoop";
+        String w1 = "hello";
+//        String w1 = "hellofathetable";
+//        String w2 = "abcdefghiklmnop";
+//        String w3 = "howareyoumanoop";
 
         words.add(w1);
-        words.add(w2);
-        words.add(w3);
+//        words.add(w2);
+//        words.add(w3);
 
         MultiLayerPerceptron mlp = getNN();
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(7, new HyperbolicTangentFunction()));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new LiniarFunction(), false));
-        mlp.addHiddenLayer(new RecurrentNeuronLayer(new HyperbolicTangentFunction(), 3));
-//        mlp.addHiddenLayer(new RecurrentNeuronLayer(new SigmoidFunction(), 3));
-//        mlp.addHiddenLayer(new LSTMNeuronLayer(new SigmoidFunction(), 3));
-//        mlp.addHiddenLayer(new LSTMNeuronLayer(new HyperbolicTangentFunction(), 3));
+//        mlp.addHiddenLayer(new RecurrentNeuronLayer(new HyperbolicTangentFunction(), 2));
+        mlp.addHiddenLayer(new RecurrentNeuronLayer(new SigmoidFunction(), 2));
+//        mlp.addHiddenLayer(new LSTMNeuronLayer(new SigmoidFunction(), 2));
+//        mlp.addHiddenLayer(new LSTMNeuronLayer(new HyperbolicTangentFunction(), 2));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
 
         double error;
@@ -62,6 +70,11 @@ public class CharPredictRNN {
             for (String word : words) {
 
                 DataSet ds = createDataSetFromWord(word);
+                if (ds.getDataSetSize() == 0) {
+                    log.info("Omitting word [{}]", word);
+                    continue;
+                }
+
                 double lastCharError = mlp.train(ds, false);
                 if (Double.isNaN(lastCharError)) {
                     log.info("Word: {}", word);
@@ -79,9 +92,27 @@ public class CharPredictRNN {
             log.info(String.format("Epoch %5d | Max Error: %.2f | word: %11s | AvgError: %.2f", epoch, maxError, maxErrorWord, avgError));
         } while (avgError > 0.4);
 
-        predict(mlp, w1);
-        predict(mlp, w2);
-        predict(mlp, w3);
+        predict(mlp, "he");
+        predict(mlp, "hel");
+        predict(mlp, "hell");
+        predict(mlp, "ye");
+    }
+
+    private Set<String> shakespeareDS() throws IOException {
+        String url = "https://s3.amazonaws.com/dl4j-distribution/pg100.txt";
+        String tempDir = System.getProperty("java.io.tmpdir");
+        String fileLocation = tempDir + "/Shakespeare.txt";    //Storage location from downloaded file
+        File f = new File(fileLocation);
+        if (!f.exists()) {
+            FileUtils.copyURLToFile(new URL(url), f);
+            System.out.println("File downloaded to " + f.getAbsolutePath());
+        } else {
+            System.out.println("Using existing text file at " + f.getAbsolutePath());
+        }
+        List<String> lines = Files.readAllLines(f.toPath());
+        return lines.stream()
+                .flatMap(line -> Splitter.on(" ").trimResults().splitToList(line).stream())
+                .collect(Collectors.toSet());
     }
 
     private MultiLayerPerceptron getNN() {
@@ -106,7 +137,10 @@ public class CharPredictRNN {
         for (double[] d : classify) {
             char c = fromDArrayToChar(d);
             log.info("Predicted char [{}]", c);
+            TelegramBot bot = TelegramBot.takeMe("firstOne123bot");
+            bot.say("Predicted char [" + c + "]");
         }
+        log.info("=====================================");
         return classify;
     }
 
@@ -149,7 +183,7 @@ public class CharPredictRNN {
 
     @Test
     public void tes() {
-        List<double[]> abc = wordToCharVector("abc");
+        List<double[]> abc = wordToCharVector("abs");
         for (double[] c : abc) {
             System.out.println(Arrays.toString(c));
         }
@@ -160,6 +194,7 @@ public class CharPredictRNN {
         System.out.println(Integer.toBinaryString('z'));
         System.out.println(Arrays.toString(convertCharToVector('c')));
 
+        System.out.println(fromBinToInt(convertCharToVector('a')));
         System.out.println(fromBinToInt(convertCharToVector('a')));
         System.out.println(fromBinToInt(convertCharToVector('z')));
         System.out.println(fromBinToInt(convertCharToVector('b')));
@@ -197,7 +232,8 @@ public class CharPredictRNN {
 
     private List<double[]> wordToCharVector(String word) {
         List<double[]> wordVector = new ArrayList<>(word.length());
-        for (char c : word.toCharArray()) {
+        word = word.replaceAll("[^a-zA-Z]", "");
+        for (char c : word.toLowerCase().toCharArray()) {
             wordVector.add(convertCharToVector(c));
         }
         return wordVector;
