@@ -6,7 +6,9 @@ import org.ml4bull.nn.data.Data;
 import org.ml4bull.util.Factory;
 import org.ml4bull.util.MathUtils;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.PriorityQueue;
 
 public class KNearestNeighbors {
     private List<Data> map;
@@ -20,35 +22,36 @@ public class KNearestNeighbors {
         this.k = k;
     }
 
+    /**
+     * In case equals voting will return all class markers.
+     * Expects normalized data [-1, 1],[0, 1].
+     * F.i. [0, 1, 0, 0, 1] in case 2nd and last class had equals number of votes.
+     * {@param input} will be added to data map and will be processed in next classification round.
+     */
     public double[] classify(Data input) {
         LowestQueue lq = new LowestQueue();
 
         map.stream().parallel().forEach(i -> {
-            double ed = MathUtils.euclidianDistance(i.getInput(), input.getInput());
+            double ed = MathUtils.euclidianDistanceLazy(i.getInput(), input.getInput());
             lq.insert(ed, i.getOutput());
         });
+        map.add(input);
 
         return voting(lq);
     }
 
     private double[] voting(LowestQueue lq) {
-        double[] counter = new double[lq.queue[0].classValue.length];
-
         MatrixOperations mo = Factory.getMatrixOperations();
-        for (int i = 0; i < lq.queue.length; i++) {
-            counter = mo.sum(counter, lq.queue[i].classValue);
-        }
+
+        double[] counter = lq.priorityQueue.stream()
+                .map(i -> i.classValue)
+                .reduce(mo::sum).orElseThrow();
 
         return transformToClass(counter);
     }
 
     private double[] transformToClass(double[] counter) {
-        double max = -1;
-        for (double i : counter) {
-            if (i > max) {
-                max = i;
-            }
-        }
+        double max = Arrays.stream(counter).max().orElseThrow();
 
         for (int i = 0; i < counter.length; i++) {
             if (counter[i] != max) {
@@ -65,15 +68,11 @@ public class KNearestNeighbors {
     }
 
     private class LowestQueue {
-        Item[] queue;
-        volatile double highestValue = -1;
+        PriorityQueue<Item> priorityQueue = new PriorityQueue<>(k, (v1, v2) ->
+                Double.compare(v2.euclidianDistance, v1.euclidianDistance) // reverse order
+        );
 
-        private LowestQueue() {
-            queue = new Item[k];
-            for (Item aQueue : queue) {
-                aQueue.ed = Integer.MAX_VALUE;
-            }
-        }
+        volatile double highestValue = Double.MAX_VALUE;
 
         private void insert(double value, double[] classValue) {
             if (highestValue < value) return;
@@ -81,30 +80,28 @@ public class KNearestNeighbors {
             synchronized (this) {
                 if (highestValue < value) return;
 
-                Item item = new Item(value, classValue);
-
-                for (int i = 0; i < queue.length; i++) {
-                    if (queue[i].ed > item.ed) {
-                        Item tmp = queue[i];
-                        queue[i] = item;
-                        item = tmp;
-                    }
+                Item candidate = new Item(value, classValue);
+                if (priorityQueue.size() < 3) {
+                    priorityQueue.add(candidate);
+                    return;
                 }
 
-                for (int i = queue.length; i >= 0; i--) {
-                    if (queue[i].ed != -1) {
-                        highestValue = queue[i].ed;
-                    }
-                }
+                Item largest = priorityQueue.peek();
+                if (candidate.euclidianDistance >= largest.euclidianDistance)
+                    return;
+
+                priorityQueue.remove();
+                priorityQueue.add(candidate);
+                highestValue = priorityQueue.peek().euclidianDistance;
             }
         }
 
         private class Item {
-            double ed;
+            double euclidianDistance;
             double[] classValue;
 
             private Item(double ed, double[] classValue) {
-                this.ed = ed;
+                this.euclidianDistance = ed;
                 this.classValue = classValue;
             }
         }

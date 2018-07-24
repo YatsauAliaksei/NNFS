@@ -121,7 +121,8 @@ public class Dl4jLstm {
             System.out.println("Using existing text file at " + f.getAbsolutePath());
         }
 
-        if (!f.exists()) throw new IOException("File does not exist: " + fileLocation);    //Download problem?
+        if (!f.exists())
+            throw new IOException("File does not exist: " + fileLocation);    //Download problem?
 
         char[] validCharacters = CharacterIterator.getMinimalCharacterSet();    //Which characters are allowed? Others will be removed
         return new CharacterIterator(fileLocation, Charset.forName("UTF-8"),

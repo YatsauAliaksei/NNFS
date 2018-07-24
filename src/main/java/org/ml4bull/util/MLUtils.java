@@ -1,6 +1,12 @@
 package org.ml4bull.util;
 
+import com.google.common.base.Preconditions;
+import lombok.val;
+import org.ml4bull.nn.data.Data;
+
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.IntStream;
 
 public class MLUtils {
 
@@ -31,5 +37,37 @@ public class MLUtils {
     public static double[] getRandomDropout(int size) {
         ThreadLocalRandom tlr = ThreadLocalRandom.current();
         return tlr.doubles(size, 0, 1).toArray();
+    }
+
+    public static List<Data> normalize(List<Data> data) {
+        Preconditions.checkArgument(data != null && !data.isEmpty(), "Not null and not empty");
+        val normalizedData = List.copyOf(data);
+
+        IntStream.range(0, normalizedData.get(0).getInput().length)
+                .parallel()
+                .forEach(k -> normalize(k, normalizedData));
+
+        return normalizedData;
+    }
+
+    private static void normalize(int featureNumber, List<Data> data) {
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+
+        for (Data item : data) {
+            double featureValue = item.getInput()[featureNumber];
+            if (min > featureValue)
+                min = featureValue;
+
+            if (max < featureValue)
+                max = featureValue;
+        }
+
+        double valuesRangeDelta = max - min;
+        for (Data item : data) {
+            double[] vector = item.getInput();
+            double featureValue = vector[featureNumber];
+            vector[featureNumber] = (featureValue - min) / valuesRangeDelta;
+        }
     }
 }

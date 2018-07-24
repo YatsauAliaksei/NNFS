@@ -10,7 +10,6 @@ import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.algorithm.optalg.GradientDescent;
 import org.ml4bull.algorithm.optalg.RMSPropGradientDescent;
-import org.ml4bull.bot.TelegramBot;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
 import org.ml4bull.nn.layer.RecurrentNeuronLayer;
@@ -137,8 +136,6 @@ public class CharPredictRNN {
         for (double[] d : classify) {
             char c = fromDArrayToChar(d);
             log.info("Predicted char [{}]", c);
-            TelegramBot bot = TelegramBot.takeMe("firstOne123bot");
-            bot.say("Predicted char [" + c + "]");
         }
         log.info("=====================================");
         return classify;
