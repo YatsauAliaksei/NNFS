@@ -1,30 +1,26 @@
 package org.ml4bull.algorithm;
 
-public class SoftmaxFunction implements ActivationFunction {
+public class ReLUFunction implements ActivationFunction {
 
     @Override
     public double[] activate(double[] layerOutput) {
-        double denominator = 0;
-        for (double lO : layerOutput) {
-            denominator += Math.exp(lO);
-        }
         double[] result = new double[layerOutput.length];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = Math.exp(layerOutput[i]) / denominator;
+        for (int i = 0; i < layerOutput.length; i++) {
+            result[i] = activate(layerOutput[i]);
         }
         return result;
     }
 
     @Override
     public double activate(double value) {
-        throw new UnsupportedOperationException("For softmax we need full layout output.");
+        return value <= .0 ? .0 : value;
     }
 
     @Override
     public double[] derivative(double[] lastInput) {
         double[] a = new double[lastInput.length];
         for (int s = 0; s < a.length; s++)
-            a[s] = (1 - lastInput[s]) * lastInput[s];
+            a[s] = lastInput[s] <= .0 ? 0 : 1.;
         return a;
     }
 }

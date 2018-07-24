@@ -1,25 +1,26 @@
-package org.ml4bull.algorithm;
+package org.ml4bull.algorithm.optalg;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 
 @Builder
 public class GradientDescent implements OptimizationAlgorithm {
 
     @Getter
-    private int batchSize;
+    protected int batchSize;
     @Getter
     @Setter
-    private double regularizationRate;
+    protected double regularizationRate = 8e-2;
     @Getter
     @Setter
-    private double learningRate;
+    protected double learningRate = 12e-1;
     @Getter
-    private AtomicInteger counter;
+    private AtomicInteger counter = new AtomicInteger();
+    @Getter
+    protected boolean withRegularization;
 
     @Override
     public boolean isLimitReached() {
@@ -36,12 +37,14 @@ public class GradientDescent implements OptimizationAlgorithm {
 
     @Override
     public void optimizeWeights(double[] weights, double[] weightsError) {
-        IntStream.range(0, weightsError.length)
-                .forEach(w -> {
-                    // omit bias regularization
-                    double regularization = w == 0 ? 0 : regularizationRate * weights[w];
-                    weights[w] -= learningRate * (weightsError[w] + regularization) / batchSize;
-                });
+        for (int w = 0; w < weightsError.length; w++) {
+
+            // omit bias regularization
+            double regularization = w == 0 ? 0 : regularizationRate * weights[w];
+            if (!withRegularization) regularization = 0;
+
+            weights[w] -= learningRate * (weightsError[w] + regularization) / batchSize;
+        }
     }
 
     public static class GradientDescentBuilder {

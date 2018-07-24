@@ -14,6 +14,7 @@
         - Create Neural Network(NN) from scratch.
         - Understand limitations of NN.
         - Create samples of real use examples.
+        - Create samples of real use examples.
         - Try different algorithms.
         - Implement ML algorithms.
     </description>
@@ -32,15 +33,23 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>4.12</junit.version>
-        <slf4j.version>RELEASE</slf4j.version>
+        <slf4j.version>1.7.25</slf4j.version>
         <assertj.version>3.5.2</assertj.version>
         <log4j.version>2.7</log4j.version>
+        <nd4j.version>1.0.0-beta</nd4j.version>
+        <nd4j.x86.version>0.4-rc3.8</nd4j.x86.version>
+        <nd4j.cuda.version>7.5</nd4j.cuda.version>
+        <nd4j.backend>nd4j-native-platform</nd4j.backend>
+        <dl4j.version>1.0.0-beta</dl4j.version>
+
+        <!--Enable for windowns-->
+        <!--<classifier>windows-x86_64</classifier>-->
     </properties>
 
 
     <dependencyManagement>
         <dependencies>
-            <!--classify-->
+            <!--tests-->
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
@@ -85,7 +94,8 @@
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
-                <version>RELEASE</version>
+                <!--<version>RELEASE</version>-->
+                <version>1.16.22</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -93,10 +103,99 @@
                 <artifactId>annotations</artifactId>
                 <version>15.0</version>
             </dependency>
+
+            <!--DL4J dependencies-->
+            <dependency>
+                <groupId>org.nd4j</groupId>
+                <artifactId>nd4j-native-platform</artifactId>
+                <version>${nd4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.nd4j</groupId>
+                <artifactId>nd4j-cuda-8.0-platform</artifactId>
+                <version>${nd4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.nd4j</groupId>
+                <artifactId>nd4j-cuda-9.0-platform</artifactId>
+                <version>${nd4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.nd4j</groupId>
+                <artifactId>nd4j-cuda-9.1-platform</artifactId>
+                <version>${nd4j.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
+        <!-- Used for downloading data in some of the examples -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>by.mrj</groupId>
+            <artifactId>bots</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+<!--        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambots</artifactId>
+            <version>3.6.1</version>
+        </dependency>-->
+
+
+        <!-- ND4J backend. You need one in every DL4J project. Normally define artifactId as either "nd4j-native-platform" or "nd4j-cuda-7.5-platform" -->
+        <dependency>
+            <groupId>org.nd4j</groupId>
+            <artifactId>${nd4j.backend}</artifactId>
+            <version>${nd4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco.javacpp-presets</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>3.0.2-1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacpp</artifactId>
+            <version>1.4.1</version>
+        </dependency>
+
+        <!--<dependency>-->
+            <!--<groupId>org.bytedeco.javacpp-presets</groupId>-->
+            <!--<artifactId>ffmpeg</artifactId>-->
+            <!--<version>3.0.2-1.2</version>-->
+            <!--<classifier>windows-x86_64</classifier>-->
+        <!--</dependency>-->
+
+<!--        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-nn</artifactId>
+            <version>1.0.0-beta</version>
+        </dependency>-->
+        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-core</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-nlp</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-zoo</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+
         <!--logging-->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -138,10 +237,49 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.10.1</version>
+        </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>cuda</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.nd4j</groupId>
+                    <artifactId>nd4j-jcublas-${nd4j.cuda.version}</artifactId>
+                    <version>${nd4j.x86.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>netlib</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.nd4j</groupId>
+                    <artifactId>nd4j-x86</artifactId>
+                    <version>${nd4j.x86.version}</version>
+                </dependency>
+            </dependencies>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <!--<configuration>-->
+                    <!--<classifier>${classifier}</classifier>-->
+                <!--</configuration>-->
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

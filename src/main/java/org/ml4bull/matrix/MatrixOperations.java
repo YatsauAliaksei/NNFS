@@ -30,6 +30,8 @@ public interface MatrixOperations {
         DoubleStream.of(matrix).boxed().forEachOrdered(m -> log.info(m.toString()));
     }
 
+    void scalarMultiply(double[] matrix, double k);
+
     /**
      * Matrix multiplication. {@param matrix1, matrix2} should be same length.
      * @param matrix1
@@ -37,6 +39,8 @@ public interface MatrixOperations {
      * @return
      */
     double multiply(double[] matrix1, double[] matrix2);
+
+    double[] scalarMultiply(double[] matrix1, double[] matrix2);
 
     double[][] multiply(double[][] matrix1, double[][] matrix2);
 
@@ -53,4 +57,6 @@ public interface MatrixOperations {
     double[] sum(double[] el1, double[] el2);
 
     boolean same(double[] i1, double[] i2);
+
+    double[] concatenate(double[] m1, double[] m2);
 }

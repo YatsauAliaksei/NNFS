@@ -64,4 +64,16 @@ public class MatrixOperationsSimpleTest {
         mo.printMatrix(transpose);
         System.out.println();
     }
+
+    @Test
+    public void testConcatenate() {
+        double[] m1 = {1, 2, 3};
+        double[] m2 = {4, 5, 6};
+        double[] concatenate = mo.concatenate(m1, m2);
+
+        assertThat(concatenate.length).isEqualTo(6);
+        assertThat(concatenate[2]).isEqualTo(3);
+        assertThat(concatenate[5]).isEqualTo(6);
+        mo.printMatrix(concatenate);
+    }
 }

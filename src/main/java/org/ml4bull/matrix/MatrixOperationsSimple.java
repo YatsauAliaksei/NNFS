@@ -28,13 +28,33 @@ public class MatrixOperationsSimple implements MatrixOperations {
     }
 
     @Override
+    public void scalarMultiply(double[] matrix, double k) {
+        for (int i = 0; i < matrix.length; i++) {
+            matrix[i] *= k;
+        }
+    }
+
+    @Override
     public double multiply(double[] matrix1, double[] matrix2) {
-        if (matrix1.length != matrix2.length)
-            throw new IllegalArgumentException("Row number of first matrix should be equal to column number of second matrix.");
+        Preconditions.checkArgument(matrix1.length == matrix2.length,
+            "Row number of first matrix should be equal to column number of second matrix.");
 
         double result = 0;
         for (int i = 0; i < matrix1.length; i++) {
             result += matrix1[i] * matrix2[i];
+        }
+
+        return result;
+    }
+
+    @Override
+    public double[] scalarMultiply(double[] matrix1, double[] matrix2) {
+        if (matrix1.length != matrix2.length)
+            throw new IllegalArgumentException("Row number of first matrix should be equal to column number of second matrix.");
+
+        double[] result = new double[matrix1.length];
+        for (int i = 0; i < matrix1.length; i++) {
+            result[i] = matrix1[i] * matrix2[i];
         }
 
         return result;
@@ -109,7 +129,7 @@ public class MatrixOperationsSimple implements MatrixOperations {
 
     @Override
     public double[] sum(double[] el1, double[] el2) {
-        Preconditions.checkArgument(el1.length == el2.length);
+        Preconditions.checkArgument(el1.length == el2.length, "Cannot summarize to vectors with diff size.");
         double[] result = new double[el1.length];
 
         for (int i = 0; i < el1.length; i++) {
@@ -127,6 +147,14 @@ public class MatrixOperationsSimple implements MatrixOperations {
             }
         }
         return true;
+    }
+
+    @Override
+    public double[] concatenate(double[] m1, double[] m2) {
+        double[] result = new double[m1.length + m2.length];
+        System.arraycopy(m1, 0, result, 0, m1.length);
+        System.arraycopy(m2, 0, result, m1.length, m2.length);
+        return result;
     }
 
 }

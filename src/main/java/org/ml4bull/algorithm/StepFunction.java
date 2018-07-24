@@ -8,8 +8,8 @@ public class StepFunction implements ActivationFunction {
 
     }
 
-    public StepFunction(double treshold) {
-        this.threshold = treshold;
+    public StepFunction(double threshold) {
+        this.threshold = threshold;
     }
 
     @Override
@@ -23,14 +23,5 @@ public class StepFunction implements ActivationFunction {
     @Override
     public double[] derivative(double[] lastInput) {
         throw new UnsupportedOperationException("Derivative for step function doesn't exist.");
-    }
-
-    @Override
-    public double[] activate(double[] layerOutput) {
-        double[] r = new double[layerOutput.length];
-        for (int i = 0; i < layerOutput.length; i++) {
-            r[i] = activate(layerOutput[i]);
-        }
-        return r;
     }
 }

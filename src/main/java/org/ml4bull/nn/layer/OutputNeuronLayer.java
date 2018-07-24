@@ -6,6 +6,7 @@ public class OutputNeuronLayer extends HiddenNeuronLayer {
 
     public OutputNeuronLayer(int outputSize, ActivationFunction activationFunction) {
         super(outputSize, activationFunction);
+        isDropoutEnabled = false;
     }
 
     @Override

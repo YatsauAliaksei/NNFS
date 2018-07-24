@@ -1,11 +1,10 @@
 package org.ml4bull.nn;
 
-import com.google.common.util.concurrent.AtomicDoubleArray;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.ml4bull.algorithm.ActivationFunction;
-import org.ml4bull.algorithm.OptimizationAlgorithm;
+import org.ml4bull.algorithm.optalg.OptimizationAlgorithm;
 import org.ml4bull.nn.data.Data;
 import org.ml4bull.nn.data.DataSet;
 import org.ml4bull.nn.data.Printer;
@@ -51,9 +50,10 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     public double[][] classify(DataSet dataSet, boolean isParallel, Printer printer) {
         double[][] result = new double[dataSet.getInput().length][];
         IntStream is = IntStream.range(0, dataSet.getInput().length);
-        if (isParallel) {
+
+        if (isParallel)
             is = is.parallel();
-        }
+
         is.forEach(i -> {
                     result[i] = process(dataSet.getInput()[i]);
                     printer.print(i, result[i], dataSet.getOutput()[i]);
@@ -64,8 +64,10 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
     private double[] process(double[] data) {
         double[] v = inputLayer.forwardPropagation(data);
-        return perceptronLayers.stream()
-                .reduce(v, (d, nl) -> nl.forwardPropagation(d), (v1, v2) -> v1);
+        for (NeuronLayer layer : perceptronLayers) {
+            v = layer.forwardPropagation(v);
+        }
+        return v;
     }
 
     @Override
@@ -80,32 +82,28 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
                 .mapToDouble(data -> calculateAndGetItemError(data.getInput(), data.getOutput()));
         double error = run(isParallel, ds);
 
-        if (optAlg.hasError()) {
-            optimize();
-        }
-
         return -error / dataSize;
-    }
-
-    private double run(boolean isParallel, DoubleStream ds) {
-        if (isParallel) {
-            ds = ds.parallel();
-        }
-        return ds.sum();
     }
 
     private double train(double[][] data, double[][] expected, boolean isParallel) {
         final int dataSize = data.length;
+        if (dataSize == 0) {
+            log.error("DataSize couldn't be empty");
+            throw new RuntimeException("DataSize couldn't be empty");
+        }
 
         DoubleStream ds = IntStream.range(0, dataSize)
                 .mapToDouble(i -> calculateAndGetItemError(data[i], expected[i]));
         double error = run(isParallel, ds);
 
-        if (optAlg.hasError()) {
-            optimize();
-        }
-
         return -error / dataSize;
+    }
+
+    private double run(boolean isParallel, DoubleStream ds) {
+        if (isParallel)
+            ds = ds.parallel();
+
+        return ds.sum();
     }
 
     @SneakyThrows(InterruptedException.class)
@@ -123,13 +121,12 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         for (NeuronLayer aRevList : revList) {
             errorOut = aRevList.backPropagation(errorOut);
         }
-        updateWeights();
+        tryUpdateWeights();
 
-        double error = itemCostFunction(calcY, output);
-        return error;
+        return itemCostFunction(calcY, output);
     }
 
-    private void updateWeights() {
+    private void tryUpdateWeights() {
         if (!optAlg.isLimitReached()) return;
 
         optimize();
@@ -137,24 +134,13 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
     }
 
     private void optimize() {
-        perceptronLayers.stream()
-                .flatMap(l -> l.getNeurons().stream())
-                .forEach(neuron -> {
-                    double[] weights = neuron.getWeights();
-                    AtomicDoubleArray weightsError = neuron.getWeightsError();
-                    double[] we = IntStream.range(0, weightsError.length()).mapToDouble(weightsError::get).toArray();
-
-                    optAlg.optimizeWeights(weights, we);
-
-                    neuron.resetErrorWeights();
-                });
+        perceptronLayers.forEach(l -> l.optimizeWeights(optAlg));
     }
 
     private double itemCostFunction(double[] calculated, double[] expected) {
-        double error = .0;
-        for (int i = 0; i < calculated.length; i++) {
-            error += expected[i] * log2(calculated[i]) + (1 - expected[i]) * log2(1 - calculated[i]);
-        }
-        return error;
+        return IntStream.range(0, calculated.length)
+                .mapToDouble(i ->
+                        expected[i] * log2(calculated[i]) + (1 - expected[i]) * log2(1 - calculated[i])
+                ).parallel().unordered().sum();
     }
 }
