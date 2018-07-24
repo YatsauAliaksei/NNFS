@@ -1,18 +1,22 @@
 package org.ml4bull.ml;
 
 import com.google.common.base.Preconditions;
+import lombok.Getter;
 import org.ml4bull.matrix.MatrixOperations;
 import org.ml4bull.nn.data.Data;
 import org.ml4bull.util.Factory;
+import org.ml4bull.util.MLUtils;
 import org.ml4bull.util.MathUtils;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
 
+@Getter
 public class KNearestNeighbors {
     private List<Data> map;
     private int k;
+    private final double errorRate; // initial error rate. Any classified value will be added to map. Error rate won't be updated in that case.
 
     public KNearestNeighbors(List<Data> map, int k) {
         Preconditions.checkArgument(k % 2 != 0, "Better 'k' to be odd number");
@@ -20,6 +24,14 @@ public class KNearestNeighbors {
 
         this.map = map;
         this.k = k;
+
+        int errorCounter = 0;
+        for (Data data : map) {
+            double[] predicted = classify(data);
+            if (MLUtils.transformClassToInt(predicted) != MLUtils.transformClassToInt(data.getOutput()))
+                errorCounter++;
+        }
+        errorRate = errorCounter / map.size();
     }
 
     /**
@@ -32,10 +44,14 @@ public class KNearestNeighbors {
         LowestQueue lq = new LowestQueue();
 
         map.stream().parallel().forEach(i -> {
-            double ed = MathUtils.euclidianDistanceLazy(i.getInput(), input.getInput());
-            lq.insert(ed, i.getOutput());
+            if (i != input) {
+                double ed = MathUtils.euclidianDistanceLazy(i.getInput(), input.getInput());
+                lq.insert(ed, i.getOutput());
+            }
         });
-        map.add(input);
+
+        if (!map.contains(input))
+            map.add(input);
 
         return voting(lq);
     }
@@ -61,10 +77,6 @@ public class KNearestNeighbors {
         }
 
         return counter;
-    }
-
-    public int getK() {
-        return k;
     }
 
     private class LowestQueue {
