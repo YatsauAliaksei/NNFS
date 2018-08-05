@@ -6,6 +6,7 @@ import org.ml4bull.nn.data.Data;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 public class MLUtils {
@@ -48,6 +49,16 @@ public class MLUtils {
                 .forEach(k -> normalize(k, normalizedData));
 
         return normalizedData;
+    }
+
+    public static double errorRate(List<Data> dataSet, Function<Data, double[]> classifyFunction) {
+        int errorCounter = 0;
+        for (Data data : dataSet) {
+            double[] predicted = classifyFunction.apply(data);
+            if (MLUtils.transformClassToInt(predicted) != MLUtils.transformClassToInt(data.getOutput()))
+                errorCounter++;
+        }
+        return errorCounter / dataSet.size();
     }
 
     private static void normalize(int featureNumber, List<Data> data) {

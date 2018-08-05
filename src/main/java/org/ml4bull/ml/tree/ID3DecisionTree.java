@@ -1,20 +1,25 @@
-package org.ml4bull.ml;
+package org.ml4bull.ml.tree;
 
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AtomicDoubleArray;
+import lombok.extern.log4j.Log4j2;
+import org.ml4bull.annotation.Untested;
 import org.ml4bull.nn.data.Data;
 import org.ml4bull.util.MLUtils;
 import org.ml4bull.util.MathUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class DecisionTree {
+@Log4j2
+@Untested
+public class ID3DecisionTree {
 
     private Node root;
     private int classLength;
@@ -52,15 +57,15 @@ public class DecisionTree {
         }
 
         int fIndex = chooseBestFeatureToSplit(dataSet);
-        Set<Double> fl = getFeatureList(dataSet, fIndex);
+        double[] fl = getFeatureUniqueValues(dataSet, fIndex);
         parent.fIndex = fIndex;
         parent.nodes = new ArrayList<>();
-        fl.forEach(f -> {
-            List<Data> subDs = splitDataSet(dataSet, fIndex, f, 0);
+        for (double f : fl) {
+            List<Data> subDs = splitDataSet(dataSet, fIndex, f);
             Node child = new Node();
             child.fValue = f;
             parent.nodes.add(createNode(subDs, child));
-        });
+        }
 
         return parent;
     }
@@ -90,11 +95,10 @@ public class DecisionTree {
         return shannonEnt;
     }
 
-    private List<Data> splitDataSet(List<Data> dataSet, int fIndex, double fValue, double range) {
+    private List<Data> splitDataSet(List<Data> dataSet, int fIndex, double fValue) {
         return dataSet.stream()
-                .filter(data -> data.getInput()[fIndex] - range / 2 > fValue ||
-                        data.getInput()[fIndex] + range / 2 < fValue
-                ).collect(Collectors.toList());
+                .filter(data -> data.getInput()[fIndex] == fValue)
+                .collect(Collectors.toList());
     }
 
     private int chooseBestFeatureToSplit(List<Data> dataSet) {
@@ -104,10 +108,10 @@ public class DecisionTree {
 
         IntStream.range(0, numF).parallel().forEach(i -> {
 
-            Set<Double> featureList = getFeatureList(dataSet, i);
+            double[] featureUniqueValues = getFeatureUniqueValues(dataSet, i);
 
-            double newEntropy = featureList.stream().mapToDouble(f -> {
-                List<Data> subDs = splitDataSet(dataSet, i, f, 0);
+            double newEntropy = Arrays.stream(featureUniqueValues).map(f -> {
+                List<Data> subDs = splitDataSet(dataSet, i, f);
                 double prob = (double) subDs.size() / dataSet.size();
                 return prob * shannonEntropy(subDs);
             }).sum();
@@ -122,10 +126,12 @@ public class DecisionTree {
         return dth.getBestFeature();
     }
 
-    private Set<Double> getFeatureList(List<Data> dataSet, int fIndex) {
+    private double[] getFeatureUniqueValues(List<Data> dataSet, int fIndex) {
         return dataSet.stream()
                 .mapToDouble(data -> data.getInput()[fIndex])
-                .boxed().collect(Collectors.toSet());
+                .distinct()
+                .toArray();
+//                .boxed().collect(Collectors.toSet());
     }
 
     private class DecisionTreeHelper {

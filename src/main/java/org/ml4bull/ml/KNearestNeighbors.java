@@ -25,13 +25,7 @@ public class KNearestNeighbors {
         this.map = map;
         this.k = k;
 
-        int errorCounter = 0;
-        for (Data data : map) {
-            double[] predicted = classify(data);
-            if (MLUtils.transformClassToInt(predicted) != MLUtils.transformClassToInt(data.getOutput()))
-                errorCounter++;
-        }
-        errorRate = errorCounter / map.size();
+        errorRate = MLUtils.errorRate(map, this::classify);
     }
 
     /**
@@ -50,10 +44,13 @@ public class KNearestNeighbors {
             }
         });
 
-        if (!map.contains(input))
+        double[] predictedClass = voting(lq);
+        if (!map.contains(input)) {
+            input.setOutput(predictedClass);
             map.add(input);
+        }
 
-        return voting(lq);
+        return predictedClass;
     }
 
     private double[] voting(LowestQueue lq) {
