@@ -14,8 +14,8 @@ import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 public class NaiveBayes {
-    private Map<Integer, Double> classProb; // The probability of class in data set.
-    private Map<Integer, double[]> probabilities; // Key: class label, Value: word probability.
+    private Map<Integer, Double> classProb; // The probability of class in data set. p(c)
+    private Map<Integer, double[]> probabilities; // Key: class label, Value: word probability. p(x,y | c)
 
     // Assumes that Data output array has length equals to number of classes.
     public void train(List<Data> dataSet) {

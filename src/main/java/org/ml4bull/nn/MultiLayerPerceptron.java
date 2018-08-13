@@ -62,6 +62,10 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         return result;
     }
 
+    public double[] classify(double[] data) {
+        return process(data);
+    }
+
     private double[] process(double[] data) {
         double[] v = inputLayer.forwardPropagation(data);
         for (NeuronLayer layer : perceptronLayers) {
@@ -101,7 +105,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
     private double run(boolean isParallel, DoubleStream ds) {
         if (isParallel)
-            ds = ds.parallel();
+            ds = ds.parallel().unordered();
 
         return ds.sum();
     }

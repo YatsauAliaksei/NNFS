@@ -3,6 +3,7 @@ package org.ml4bull.quiz;
 import com.google.common.base.Splitter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.ml4bull.algorithm.SigmoidFunction;
@@ -27,8 +28,8 @@ public class CharPredictRNN {
 
     @Test
     public void predictNextChars() throws IOException {
-//        Set<String> words = shakespeareDS();
-        log.info("Data set has been created.");
+//        char[] words = shakespeareDS();
+//        log.info("Data set has been created.");
 
 //        WebBandog webBandog = new WebBandog();
 //        String pageURL = "https://www.oxforddictionaries.com";
@@ -51,7 +52,7 @@ public class CharPredictRNN {
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new LiniarFunction(), false));
 //        mlp.addHiddenLayer(new RecurrentNeuronLayer(new HyperbolicTangentFunction(), 2));
-        mlp.addHiddenLayer(new RecurrentNeuronLayer(new SigmoidFunction(), 2));
+        mlp.addHiddenLayer(new RecurrentNeuronLayer(new SigmoidFunction(), 100, 2));
 //        mlp.addHiddenLayer(new LSTMNeuronLayer(new SigmoidFunction(), 2));
 //        mlp.addHiddenLayer(new LSTMNeuronLayer(new HyperbolicTangentFunction(), 2));
 //        mlp.addHiddenLayer(new HiddenNeuronLayer(26, new SigmoidFunction(), false));
@@ -97,7 +98,7 @@ public class CharPredictRNN {
         predict(mlp, "ye");
     }
 
-    private Set<String> shakespeareDS() throws IOException {
+    private char[] shakespeareDS() throws IOException {
         String url = "https://s3.amazonaws.com/dl4j-distribution/pg100.txt";
         String tempDir = System.getProperty("java.io.tmpdir");
         String fileLocation = tempDir + "/Shakespeare.txt";    //Storage location from downloaded file
@@ -110,12 +111,17 @@ public class CharPredictRNN {
         }
         List<String> lines = Files.readAllLines(f.toPath());
         return lines.stream()
-                .flatMap(line -> Splitter.on(" ").trimResults().splitToList(line).stream())
-                .collect(Collectors.toSet());
+                .reduce((l, l2) -> l + " " + l2)
+                .orElseThrow(RuntimeException::new).toCharArray();
+
+//        return lines.stream()
+//                .flatMap(line -> Splitter.on(" ").trimResults().splitToList(line).stream())
+//                .filter(StringUtils::isNotBlank)
+//                .collect(Collectors.toSet());
     }
 
     private MultiLayerPerceptron getNN() {
-        GradientDescent optAlg = RMSPropGradientDescent.builder()
+        GradientDescent optAlg = RMSPropGradientDescent.build()
                 .learningRate(0.1)
                 .batchSize(15)
                 .build();

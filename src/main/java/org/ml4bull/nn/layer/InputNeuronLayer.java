@@ -8,7 +8,7 @@ import java.util.List;
 
 public class InputNeuronLayer implements NeuronLayer {
     private int inputSize;
-    private boolean isDropEnabled = true;
+    private boolean isDropEnabled = false;
     private DropoutRegularization dropoutRegularization = new DropoutRegularization(0.005);
 
     public InputNeuronLayer(int input) {
@@ -20,7 +20,7 @@ public class InputNeuronLayer implements NeuronLayer {
         double[] result = inValues;
 
         if (isDropEnabled)
-            result = dropoutRegularization.dropout(inValues);
+            result = dropoutRegularization.dropout(result);
 
         return result;
     }

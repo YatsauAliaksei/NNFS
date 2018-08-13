@@ -3,10 +3,7 @@ package org.ml4bull.quiz;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.ml4bull.algorithm.HyperbolicTangentFunction;
-import org.ml4bull.algorithm.SigmoidFunction;
-import org.ml4bull.algorithm.SoftmaxFunction;
-import org.ml4bull.algorithm.StepFunction;
+import org.ml4bull.algorithm.*;
 import org.ml4bull.algorithm.optalg.GradientDescent;
 import org.ml4bull.algorithm.optalg.RMSPropGradientDescent;
 import org.ml4bull.nn.MultiLayerPerceptron;
@@ -24,9 +21,10 @@ public class FizzBuzzNN {
         FizzBuzzNN fb = new FizzBuzzNN();
         DataSet trainSet = fb.getTrainSet();
 
-        GradientDescent optAlg = RMSPropGradientDescent.builder()
-                .learningRate(0.5)
-                .batchSize(80)
+        GradientDescent optAlg = RMSPropGradientDescent.build()
+                .learningRate(0.001)
+                .withRegularization(true)
+                .batchSize(17)
                 .build();
 
         MultiLayerPerceptron sp = MultiLayerPerceptron.builder()
@@ -36,15 +34,17 @@ public class FizzBuzzNN {
                 .optAlg(optAlg)
                 .build();
 
-        sp.addHiddenLayer(new HiddenNeuronLayer(20, new SigmoidFunction()));
+//        sp.addHiddenLayer(new HiddenNeuronLayer(20, new SigmoidFunction()));
+//        sp.addHiddenLayer(new HiddenNeuronLayer(20, new SoftmaxFunction()));
 //        sp.addHiddenLayer(new HiddenNeuronLayer(20, new HyperbolicTangentFunction()));
+        sp.addHiddenLayer(new HiddenNeuronLayer(20, new ReLUFunction()));
 
         double error;
         int epoch = 0;
         do {
             error = sp.train(trainSet, true);
             log.info("Epoch: {} | Error: {}", ++epoch, +error);
-        } while (error > 1e-1);
+        } while (error > 1e-2);
 
         DataSet testSet = fb.getTestSet();
         sp.classify(testSet, false, (i, calc, ideal) -> System.out.println(backConvert(calc, i)));

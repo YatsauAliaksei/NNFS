@@ -7,8 +7,8 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="org.ml4bull" level="DEBUG"/>
-        <Root level="error">
+        <Logger name="org.ml4bull" level="info"/>
+        <Root level="info">
             <AppenderRef ref="Console"/>
         </Root>
     </Loggers>

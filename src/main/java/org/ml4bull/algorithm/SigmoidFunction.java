@@ -1,5 +1,6 @@
 package org.ml4bull.algorithm;
 
+// (0, 1)
 public class SigmoidFunction implements ActivationFunction {
 
     @Override

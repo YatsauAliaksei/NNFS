@@ -11,10 +11,11 @@ public class OutputNeuronLayer extends HiddenNeuronLayer {
 
     @Override
     public double[] backPropagation(double[] expected) { // In output layer error is simple expected value.
-        // calculate out error start point for back propagation.
+//         calculate out error start point for back propagation.
         double[] errorOut = new double[expected.length];
+        double[] result = lastResult.get();
         for (int j = 0; j < expected.length; j++) {
-            errorOut[j] = lastResult.get()[j] - expected[j];
+            errorOut[j] = result[j] - expected[j];
         }
 
         return super.backPropagation(errorOut);

@@ -76,4 +76,14 @@ public class MatrixOperationsSimpleTest {
         assertThat(concatenate[5]).isEqualTo(6);
         mo.printMatrix(concatenate);
     }
+
+    @Test
+    public void scalarMultiply() {
+        double[] m1 = {1, 2, 3};
+        double[] m2 = {4, 5, 6};
+
+        double[] result = mo.scalarMultiply(m1, m2);
+        mo.printMatrix(result);
+        assertThat(result).isEqualTo(new double[] {4, 10, 18});
+    }
 }

@@ -37,7 +37,7 @@ public class KNearestNeighbors {
     public double[] classify(Data input) {
         LowestQueue lq = new LowestQueue();
 
-        map.stream().parallel().forEach(i -> {
+        map.stream().parallel().forEach(i -> { // TODO: change to Kd trees algorithm.
             if (i != input) {
                 double ed = MathUtils.euclidianDistanceLazy(i.getInput(), input.getInput());
                 lq.insert(ed, i.getOutput());

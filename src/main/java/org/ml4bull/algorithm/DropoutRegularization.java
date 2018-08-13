@@ -6,7 +6,7 @@ import org.ml4bull.util.MLUtils;
 
 public class DropoutRegularization {
 
-    private StepFunction stepFunction;
+    private ActivationFunction stepFunction;
 
     public DropoutRegularization(double threshold) {
         stepFunction = new StepFunction(threshold);

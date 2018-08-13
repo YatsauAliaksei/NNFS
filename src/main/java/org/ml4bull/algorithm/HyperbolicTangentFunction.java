@@ -1,5 +1,6 @@
 package org.ml4bull.algorithm;
 
+// (-1, 1)
 public class HyperbolicTangentFunction implements ActivationFunction {
 
     @Override
