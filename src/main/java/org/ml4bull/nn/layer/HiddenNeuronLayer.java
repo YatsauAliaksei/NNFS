@@ -11,6 +11,7 @@ import org.ml4bull.util.Factory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -20,7 +21,7 @@ public class HiddenNeuronLayer implements NeuronLayer {
     protected ActivationFunction activationFunction;
     protected ThreadLocal<double[]> lastResult = new ThreadLocal<>();
     protected ThreadLocal<double[]> lastInput = new ThreadLocal<>();
-    private DropoutRegularization dropoutRegularization = new DropoutRegularization(0.05);
+    private DropoutRegularization dropoutRegularization = new DropoutRegularization(0.005);
 
     public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction) {
         createNeurons(neuronsCount);
@@ -76,18 +77,31 @@ public class HiddenNeuronLayer implements NeuronLayer {
         double[] layerError = mo.scalarMultiply(previousError, derivative);
 
         calculateAndSaveDeltaError(layerError);
+//        clip();
 
-        return calculateLayerError(layerError);
+        return gradientVector(layerError);
     }
 
-    protected double[] calculateLayerError(double[] currentError) {
+    private void clip() {
+        for (Neuron neuron : neurons) {
+            AtomicDoubleArray weightsError = neuron.getWeightsError();
+            for (int i = 0; i < weightsError.length(); i++) {
+                double dw = weightsError.get(i);
+                if (dw > 5 || dw < -5) {
+                    weightsError.set(i, dw > 5 ? 5 : -5);
+                }
+            }
+        }
+    }
+
+    protected double[] gradientVector(double[] layerError) {
         // layer weights matrix
         double[][] theta = createLayerWeightMatrix();
 
         MatrixOperations mo = Factory.getMatrixOperations();
-        // calculating layer error
+        // calculating gradient vector
         double[][] thetaT = mo.transpose(theta);
-        return mo.multiplySingleDim(thetaT, currentError);
+        return mo.multiplySingleDim(thetaT, layerError);
     }
 
     private double[][] createLayerWeightMatrix() {
@@ -102,7 +116,8 @@ public class HiddenNeuronLayer implements NeuronLayer {
 
     // Theta T x E. Multiply weights on previous layer error.
     protected void calculateAndSaveDeltaError(double[] error) {
-        Preconditions.checkArgument(error.length == neurons.size());
+        Preconditions.checkArgument(error.length == neurons.size(), "Error length should be equal to neurons size.");
+
         IntStream.range(0, neurons.size()).forEach(i -> {
             Neuron neuron = neurons.get(i);
             double[] we = new double[neuron.getWeights().length];
@@ -111,7 +126,7 @@ public class HiddenNeuronLayer implements NeuronLayer {
                 we[t] = error[i] * lastInput.get()[t - 1]; // the rate of change of the cost with respect to any weight in the network
             }
             neuron.addWeightsError(we);
-            gradientCheck(we);
+//            gradientCheck(we);
         });
     }
 
@@ -144,8 +159,8 @@ public class HiddenNeuronLayer implements NeuronLayer {
             for (int i = 0; i < derVal.length; i++) {
                 System.out.println("Gradient error. Expected: " + derVal[i] + " Actual: " + gradientDerivative[i]);
                 if (derVal[i] - gradientDerivative[i] > allowableError) {
-//                    System.out.println("Gradient error. Expected: " + derVal[i] + " Actual: " + gradientDerivative[i]);
-//                    throw new RuntimeException("Gradient error. Expected: " + derVal[i] + " Actual: " + gradientDerivative[i]);
+                    System.out.println("Gradient error. Expected: " + derVal[i] + " Actual: " + gradientDerivative[i]);
+                    throw new RuntimeException("Gradient error. Expected: " + derVal[i] + " Actual: " + gradientDerivative[i]);
                 }
             }
         });

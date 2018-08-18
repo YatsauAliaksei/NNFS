@@ -23,9 +23,8 @@ public class MazeNN {
         DataSet trainSet = mazeNN.getTrainSet();
 
         GradientDescent optAlg = ADAMGradientDescent.builder()
-                .learningRate(0.8)
-                .batchSize(80)
-                .learningRate(4e-1)
+                .learningRate(0.01)
+                .batchSize(10)
                 .build();
 
         MultiLayerPerceptron sp = MultiLayerPerceptron.builder()

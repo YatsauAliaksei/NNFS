@@ -2,13 +2,11 @@ package org.ml4bull.algorithm.optalg;
 
 import lombok.Builder;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class RMSPropGradientDescent extends GradientDescent {
 
     @Builder(builderMethodName = "build")
     private RMSPropGradientDescent(int batchSize, double regularizationRate, double learningRate, boolean withRegularization) {
-        super(batchSize, regularizationRate, learningRate, new AtomicInteger(), withRegularization);
+        super(batchSize, regularizationRate, learningRate, 0, withRegularization);
     }
 
     @Override

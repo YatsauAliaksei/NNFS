@@ -4,8 +4,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 @Builder
 public class GradientDescent implements OptimizationAlgorithm {
 
@@ -13,26 +11,22 @@ public class GradientDescent implements OptimizationAlgorithm {
     protected int batchSize;
     @Getter
     @Setter
-    protected double regularizationRate = 8e-2;
+    protected double regularizationRate = 8e-6;
     @Getter
     @Setter
-    protected double learningRate = 12e-1;
+    protected double learningRate = 1e-2;
     @Getter
-    private AtomicInteger counter = new AtomicInteger();
+    private int counter;
     @Getter
     protected boolean withRegularization;
 
     @Override
-    public boolean isLimitReached() {
-        if (counter.incrementAndGet() == batchSize) {
-            counter.addAndGet(-batchSize);
+    public synchronized boolean isLimitReached() {
+        if (++counter == batchSize) {
+            counter = 0;
             return true;
         }
         return false;
-    }
-
-    public boolean hasError() {
-        return counter.get() != 0;
     }
 
     @Override
@@ -48,8 +42,8 @@ public class GradientDescent implements OptimizationAlgorithm {
     }
 
     public static class GradientDescentBuilder {
-        private double regularizationRate = 8e-2;
-        private double learningRate = 12e-1;
-        private AtomicInteger counter = new AtomicInteger();
+        private double regularizationRate = 8e-6;
+        private double learningRate = 1e-2;
+//        private AtomicInteger counter = new AtomicInteger();
     }
 }

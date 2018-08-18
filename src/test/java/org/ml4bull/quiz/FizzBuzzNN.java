@@ -34,9 +34,6 @@ public class FizzBuzzNN {
                 .optAlg(optAlg)
                 .build();
 
-//        sp.addHiddenLayer(new HiddenNeuronLayer(20, new SigmoidFunction()));
-//        sp.addHiddenLayer(new HiddenNeuronLayer(20, new SoftmaxFunction()));
-//        sp.addHiddenLayer(new HiddenNeuronLayer(20, new HyperbolicTangentFunction()));
         sp.addHiddenLayer(new HiddenNeuronLayer(20, new ReLUFunction()));
 
         double error;

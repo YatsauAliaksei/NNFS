@@ -32,12 +32,23 @@ public class MLUtils {
 
     public static double[] getRandomWeights(int size) {
         ThreadLocalRandom tlr = ThreadLocalRandom.current();
-        return tlr.doubles(size, -0.5, 0.5).toArray();
+        return tlr.doubles(size, -0.5, 0.5).map(v -> {
+            if (v == 0) {
+                v = ThreadLocalRandom.current().nextDouble(1e-10, .5); // yes, let it be positive
+            }
+            return v;
+        }).toArray();
     }
 
     public static double[] getRandomDropout(int size) {
         ThreadLocalRandom tlr = ThreadLocalRandom.current();
         return tlr.doubles(size, 0, 1).toArray();
+    }
+
+    public static void clip(double[] data, double min, double max) {
+        for (int i = 0; i < data.length; i++) {
+            data[i] = data[i] > max ? max : data[i] < min ? min : data[i];
+        }
     }
 
     public static List<Data> normalize(List<Data> data) {

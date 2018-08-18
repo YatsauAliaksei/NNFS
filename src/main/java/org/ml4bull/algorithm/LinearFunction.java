@@ -1,6 +1,6 @@
 package org.ml4bull.algorithm;
 
-public class LiniarFunction implements ActivationFunction {
+public class LinearFunction implements ActivationFunction {
     @Override
     public double[] activate(double[] layerOutput) {
         return layerOutput;

@@ -2,14 +2,13 @@ package org.ml4bull.nn.layer;
 
 import org.ml4bull.algorithm.ActivationFunction;
 import org.ml4bull.algorithm.HyperbolicTangentFunction;
-import org.ml4bull.algorithm.LiniarFunction;
+import org.ml4bull.algorithm.LinearFunction;
 import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.optalg.OptimizationAlgorithm;
 import org.ml4bull.matrix.MatrixOperations;
 import org.ml4bull.util.Factory;
 import org.ml4bull.util.Memory;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -45,10 +44,10 @@ public class LSTMNeuronLayer extends HiddenNeuronLayer {
         this.outputGate = new HiddenNeuronLayer(inputSize, new SigmoidFunction(), false);
         this.forgetGate = new HiddenNeuronLayer(inputSize, new SigmoidFunction(), false);
 
-        this.inputGateFeat = new HiddenNeuronLayer(inputSize, new LiniarFunction(), false);
-        this.outputGateFeat = new HiddenNeuronLayer(inputSize, new LiniarFunction(), false);
-        this.forgetGateFeat = new HiddenNeuronLayer(inputSize, new LiniarFunction(), false);
-        this.candidateFeat = new HiddenNeuronLayer(inputSize, new LiniarFunction(), false);
+        this.inputGateFeat = new HiddenNeuronLayer(inputSize, new LinearFunction(), false);
+        this.outputGateFeat = new HiddenNeuronLayer(inputSize, new LinearFunction(), false);
+        this.forgetGateFeat = new HiddenNeuronLayer(inputSize, new LinearFunction(), false);
+        this.candidateFeat = new HiddenNeuronLayer(inputSize, new LinearFunction(), false);
         this.cellState = new double[inputSize];
 
         lstmLayerMap = new LinkedHashMap<>();

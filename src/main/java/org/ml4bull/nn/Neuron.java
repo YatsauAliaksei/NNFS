@@ -22,7 +22,8 @@ public class Neuron {
             synchronized (this) {
                 if (weights == null) {
                     weightsError = new AtomicDoubleArray(features.length);
-                    weights = MLUtils.getRandomWeights(features.length);
+                    weights = MLUtils.getRandomWeights(features.length); // basic random weights.
+                    weights[0] = 1; // bias initial
                 }
             }
         }
@@ -40,6 +41,7 @@ public class Neuron {
     }
 
     public void resetErrorWeights() {
-        IntStream.range(0, weightsError.length()).forEach(i -> weightsError.set(i, 0));
+        weightsError = new AtomicDoubleArray(weights.length);
+//        IntStream.range(0, weightsError.length()).forEach(i -> weightsError.set(i, 0));
     }
 }

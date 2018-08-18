@@ -47,6 +47,7 @@ public class MatrixOperationsSimple implements MatrixOperations {
         return result;
     }
 
+    // element wise multiplication.
     @Override
     public double[] scalarMultiply(double[] matrix1, double[] matrix2) {
         if (matrix1.length != matrix2.length)
@@ -137,6 +138,13 @@ public class MatrixOperationsSimple implements MatrixOperations {
         }
 
         return result;
+    }
+
+    @Override
+    public double[] copy(double[] source) {
+        double[] dest = new double[source.length];
+        System.arraycopy(source, 0, dest, 0, source.length);
+        return dest;
     }
 
     @Override

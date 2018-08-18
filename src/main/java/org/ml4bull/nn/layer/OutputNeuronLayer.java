@@ -18,6 +18,9 @@ public class OutputNeuronLayer extends HiddenNeuronLayer {
             errorOut[j] = result[j] - expected[j];
         }
 
+//        int target = expected.length - MLUtils.transformClassToInt(expected);
+//        errorOut[target] -= 1;
+
         return super.backPropagation(errorOut);
     }
 }

@@ -6,7 +6,7 @@ public class ADAMGradientDescent extends GradientDescent {
 
     @Builder(builderMethodName = "build")
     private ADAMGradientDescent(int batchSize, double regularizationRate, double learningRate, boolean withRegularization) {
-        super(batchSize, regularizationRate, learningRate, null, withRegularization);
+        super(batchSize, regularizationRate, learningRate, 0, withRegularization);
     }
 
     @Override

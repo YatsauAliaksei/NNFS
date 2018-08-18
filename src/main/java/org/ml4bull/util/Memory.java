@@ -52,7 +52,7 @@ public class Memory<T> {
     public T get(int i) {
         Node node = latest;
         for (int j = 0; j < i; j++) {
-            node = latest.next;
+            node = node.next;
         }
         return node.value;
     }

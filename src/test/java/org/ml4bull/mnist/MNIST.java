@@ -3,7 +3,6 @@ package org.ml4bull.mnist;
 import com.google.common.base.Stopwatch;
 import lombok.extern.log4j.Log4j2;
 import org.junit.Test;
-import org.ml4bull.algorithm.ReLUFunction;
 import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
@@ -23,7 +22,7 @@ public class MNIST {
     private int reduceDSScale = 100;
 
     @Test
-    public void main() throws Exception {
+    public void main() {
         Stopwatch stopwatch = Stopwatch.createStarted();
         DataSet trainDS = getTrainDS();
         System.out.println("Watch: " + stopwatch.toString());
@@ -37,7 +36,7 @@ public class MNIST {
         GradientDescent optAlg = RMSPropGradientDescent.build()
                 .learningRate(0.01)
                 .withRegularization(true)
-                .batchSize(50)
+                .batchSize(10)
                 .build();
 
         MultiLayerPerceptron sp = MultiLayerPerceptron.builder()
@@ -48,8 +47,6 @@ public class MNIST {
                 .build();
 
         sp.addHiddenLayer(new HiddenNeuronLayer(300, new SigmoidFunction()));
-//        sp.addHiddenLayer(new HiddenNeuronLayer(30, new HyperbolicTangentFunction()));
-//        sp.addHiddenLayer(new HiddenNeuronLayer(300, new ReLUFunction()));
         normalize(trainDS);
 
         double error;
@@ -79,7 +76,7 @@ public class MNIST {
                 });
 
         log.info("True Positive: {}%", String.format("%.2f", success.get() / (double) total.get() * 100));
-        log.info("Error rate: {}%", String.format("%.2f", (total.get() - success.get()) / (double) total.get()));
+        log.info("Error rate: {}", String.format("%.2f", (total.get() - success.get()) / (double) total.get()));
         log.info("Time overall {}", stopwatch.stop());
 
         System.exit(0);
