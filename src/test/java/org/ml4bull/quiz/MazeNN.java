@@ -4,6 +4,7 @@ import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.algorithm.optalg.ADAMGradientDescent;
 import org.ml4bull.algorithm.optalg.GradientDescent;
+import org.ml4bull.algorithm.optalg.RMSPropGradientDescent;
 import org.ml4bull.matrix.DoubleIterator;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
@@ -22,7 +23,7 @@ public class MazeNN {
         MazeNN mazeNN = new MazeNN();
         DataSet trainSet = mazeNN.getTrainSet();
 
-        GradientDescent optAlg = ADAMGradientDescent.builder()
+        GradientDescent optAlg = RMSPropGradientDescent.buildRMS()
                 .learningRate(0.01)
                 .batchSize(10)
                 .build();

@@ -2,7 +2,6 @@ package org.ml4bull.nn.layer;
 
 import org.ml4bull.algorithm.ActivationFunction;
 import org.ml4bull.algorithm.HyperbolicTangentFunction;
-import org.ml4bull.algorithm.LinearFunction;
 import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.optalg.OptimizationAlgorithm;
 import org.ml4bull.matrix.MatrixOperations;
@@ -23,32 +22,42 @@ public class LSTMNeuronLayer extends HiddenNeuronLayer {
     private HiddenNeuronLayer inputGate;
     private HiddenNeuronLayer outputGate;
     private HiddenNeuronLayer forgetGate;
+    private HiddenNeuronLayer candidateGate;
 
     private Memory<double[]> memory;
     private Memory<double[]> featureMem;
-    private double[] cellState;
+//    private Memory<double[]> historyMem;
+    private Memory<double[]> cellStateMem;
+    private Memory<double[]> outMem;
+//    private double[] cellState;
 
     private Map<HiddenNeuronLayer, HiddenNeuronLayer> lstmLayerMap;
 
-    public LSTMNeuronLayer(ActivationFunction activationFunction, int memorySize) {
-        super(0, activationFunction, false);
+    public LSTMNeuronLayer(int neuronSize, ActivationFunction activationFunction, int memorySize) {
+        super(neuronSize, activationFunction, false);
         memory = new Memory<>(memorySize);
         featureMem = new Memory<>(memorySize);
+//        historyMem = new Memory<>(memorySize);
+        cellStateMem = new Memory<>(memorySize);
+        outMem = new Memory<>(memorySize);
+        init(neuronSize);
     }
 
-    private void init(int inputSize) {
+    private void init(int neuronSize) {
         if (inputGate != null) return;
 
-        createNeurons(inputSize);
-        this.inputGate = new HiddenNeuronLayer(inputSize, new SigmoidFunction(), false);
-        this.outputGate = new HiddenNeuronLayer(inputSize, new SigmoidFunction(), false);
-        this.forgetGate = new HiddenNeuronLayer(inputSize, new SigmoidFunction(), false);
+//        createNeurons(neuronSize);
+        this.inputGate = new HiddenNeuronLayer(neuronSize, new SigmoidFunction(), false);
+        this.outputGate = new HiddenNeuronLayer(neuronSize, new SigmoidFunction(), false);
+        this.forgetGate = new HiddenNeuronLayer(neuronSize, new SigmoidFunction(), false);
+        this.candidateGate = new HiddenNeuronLayer(neuronSize, new HyperbolicTangentFunction(), false);
 
-        this.inputGateFeat = new HiddenNeuronLayer(inputSize, new LinearFunction(), false);
-        this.outputGateFeat = new HiddenNeuronLayer(inputSize, new LinearFunction(), false);
-        this.forgetGateFeat = new HiddenNeuronLayer(inputSize, new LinearFunction(), false);
-        this.candidateFeat = new HiddenNeuronLayer(inputSize, new LinearFunction(), false);
-        this.cellState = new double[inputSize];
+//        this.inputGateFeat = new HiddenNeuronLayer(neuronSize, new LinearFunction(), false);
+//        this.outputGateFeat = new HiddenNeuronLayer(neuronSize, new LinearFunction(), false);
+//        this.forgetGateFeat = new HiddenNeuronLayer(neuronSize, new LinearFunction(), false);
+//        this.candidateFeat = new HiddenNeuronLayer(neuronSize, new LinearFunction(), false);
+
+//        this.cellState = new double[neuronSize]; // todo <----
 
         lstmLayerMap = new LinkedHashMap<>();
         lstmLayerMap.put(forgetGateFeat, forgetGate);
@@ -56,38 +65,49 @@ public class LSTMNeuronLayer extends HiddenNeuronLayer {
         lstmLayerMap.put(outputGateFeat, outputGate);
     }
 
+    private HyperbolicTangentFunction hyperbolicTangentFunction = new HyperbolicTangentFunction();
+
     @Override
     public double[] forwardPropagation(double[] f) {
-        init(f.length);
-
-        featureMem.add(f);
-
-        // calculate forget layer
-        double[] fLO = gateCalculate(forgetGateFeat, forgetGate, f);
-        // calculate input layer
-        double[] iLO = gateCalculate(inputGateFeat, inputGate, f);
-        // calculate output layer
-        double[] oLO = gateCalculate(outputGateFeat, outputGate, f);
-
+        featureMem.add(f); // save
         MatrixOperations mo = Factory.getMatrixOperations();
-        cellState = mo.scalarMultiply(fLO, cellState);
 
-        // calculate new cellState
-        double[] cellStateCandidates = gateCalculate(candidateFeat, this, f);
+        double[] prevOut = getLastMemory(outMem, f.length); // read previous out
 
-        // approving new cellState
-        double[] approvedCandidates = mo.scalarMultiply(iLO, cellStateCandidates);
-        // save new cell state
-        cellState = mo.sum(cellState, approvedCandidates);
+        // -- first way
+        double[] mergedInput = mo.concatenate(prevOut, f);
+        // decide what information we’re going to throw away from the cell state. This decision is made by a sigmoid layer called the “forget gate layer.”
+        double[] forgetGateResult = forgetGate.forwardPropagation(mergedInput); // sigmoid layer called the “forget gate layer.". Output [0, 1], 0 - forget completely
+        double[] lastCellState = getLastMemory(cellStateMem, f.length); // getting last Cell State
+        double[] cellStateAfterForgetGate = mo.scalarMultiply(forgetGateResult, lastCellState); // what Cell State to forget decision
 
-        // truncating values to be between -1 / 1.
-        HyperbolicTangentFunction hyperbolicTangentFunction = new HyperbolicTangentFunction();
-//        SigmoidFunction hyperbolicTangentFunction = new SigmoidFunction();
-        double[] truncated = hyperbolicTangentFunction.activate(cellState);
-        double[] hT = mo.scalarMultiply(oLO, truncated);
-        memory.add(hT);
+        // -- second way
+        // decide what new information we’re going to store in the cell state
+        double[] inputGateResult = inputGate.forwardPropagation(mergedInput); // sigmoid layer called the “input gate layer” decides which values we’ll update.
+        double[] candidateGateResult = candidateGate.forwardPropagation(mergedInput); // tanh layer creates a vector of new candidate values, that could be added to the state.
+        double[] approvedCandidates = mo.scalarMultiply(inputGateResult, candidateGateResult); // how much we decided to update each state value.
 
-        return hT;
+        double[] newCellState = mo.sum(approvedCandidates, cellStateAfterForgetGate);
+
+        cellStateMem.add(newCellState); // update Cell State
+
+        double[] outResult = outputGate.forwardPropagation(mergedInput); // sigmoid layer which decides what parts of the cell state we’re going to output.
+
+        // we put the cell state through tanh (to push the values to be between −1 and 1)
+        double[] activatedCellState = hyperbolicTangentFunction.activate(newCellState);
+
+        outResult = mo.scalarMultiply(outResult, activatedCellState); // multiply it by the output of the outputGate, so that we only output the parts we decided to.
+        outMem.add(outResult); // save last out
+
+        return outResult;
+    }
+
+    private double[] getLastMemory(Memory<double[]> memory, int defaultSize) {
+        double[] history;
+        if ((history = memory.getLast()) == null) {
+            history = new double[defaultSize];
+        }
+        return history;
     }
 
     @Override

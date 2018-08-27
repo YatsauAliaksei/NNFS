@@ -1,47 +1,61 @@
 package org.ml4bull.nn;
 
 
-import com.google.common.util.concurrent.AtomicDoubleArray;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.ml4bull.matrix.MatrixOperations;
 import org.ml4bull.util.Factory;
 import org.ml4bull.util.MLUtils;
 
-import java.util.stream.IntStream;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
+@Builder
 public class Neuron {
-    private ThreadLocal<double[]> features = new ThreadLocal<>();
     @Getter
     @Setter
     private double[] weights;
+    @Setter
     @Getter
-    private AtomicDoubleArray weightsError;
+    private double bias;
+    @Getter
+    private final Queue<double[]> weightsErrorQueue = new ConcurrentLinkedQueue<>();
+    @Getter
+    private final Queue<Double> biasErrorQueue = new ConcurrentLinkedQueue<>();
 
-    public void setFeatures(double[] features) {
-        if (weights == null) {
-            synchronized (this) {
-                if (weights == null) {
-                    weightsError = new AtomicDoubleArray(features.length);
-                    weights = MLUtils.getRandomWeights(features.length); // basic random weights.
-                    weights[0] = 1; // bias initial
-                }
-            }
+    public void tryInit(int numberOfFeatures) {
+        if (weights != null) return;
+
+        synchronized (this) {
+            if (weights == null)
+                weights = MLUtils.getRandomWeights(numberOfFeatures); // basic random weights.
         }
-        this.features.set(features);
     }
 
-    public double calculate() {
-        return Factory.getMatrixOperations().multiply(weights, features.get());
+    public double calculate(double[] features) {
+        return Factory.getMatrixOperations().multiply(weights, features) + bias;
     }
 
     public void addWeightsError(double[] we) {
-        for (int i = 0; i < weightsError.length(); i++) {
-            weightsError.addAndGet(i, we[i]);
-        }
+        weightsErrorQueue.add(we);
+    }
+
+    public void addBiasError(double v) {
+        biasErrorQueue.add(v);
+    }
+
+    public double[] getWeightsErrorPrimitive() {
+        MatrixOperations mo = Factory.getMatrixOperations();
+        return weightsErrorQueue.stream().reduce(mo::sum).orElseThrow(RuntimeException::new);
+    }
+
+    public double getBiasErrorSum() {
+        return biasErrorQueue.parallelStream().mapToDouble(Double::doubleValue).sum();
     }
 
     public void resetErrorWeights() {
-        weightsError = new AtomicDoubleArray(weights.length);
-//        IntStream.range(0, weightsError.length()).forEach(i -> weightsError.set(i, 0));
+        weightsErrorQueue.clear();
+        biasErrorQueue.clear();
     }
 }

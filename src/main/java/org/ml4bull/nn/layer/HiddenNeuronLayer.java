@@ -1,7 +1,7 @@
 package org.ml4bull.nn.layer;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.AtomicDoubleArray;
+import lombok.Getter;
 import org.ml4bull.algorithm.ActivationFunction;
 import org.ml4bull.algorithm.DropoutRegularization;
 import org.ml4bull.algorithm.optalg.OptimizationAlgorithm;
@@ -9,42 +9,43 @@ import org.ml4bull.matrix.MatrixOperations;
 import org.ml4bull.nn.Neuron;
 import org.ml4bull.util.Factory;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class HiddenNeuronLayer implements NeuronLayer {
     protected boolean isDropoutEnabled = true;
+    @Getter
     protected List<Neuron> neurons;
     protected ActivationFunction activationFunction;
     protected ThreadLocal<double[]> lastResult = new ThreadLocal<>();
     protected ThreadLocal<double[]> lastInput = new ThreadLocal<>();
-    private DropoutRegularization dropoutRegularization = new DropoutRegularization(0.005);
+    private DropoutRegularization dropoutRegularization = new DropoutRegularization(0.05);
 
     public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction) {
-        createNeurons(neuronsCount);
+        this(neuronsCount, activationFunction, true);
+    }
+
+    public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction, boolean withBias) {
+        createNeurons(neuronsCount, withBias);
         this.activationFunction = activationFunction;
     }
 
-    protected void createNeurons(int neuronsCount) {
-        neurons = IntStream.range(0, neuronsCount)
-                .mapToObj(i -> new Neuron())
-                .collect(Collectors.toList());
+    public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction, boolean withBias, boolean isDropoutEnabled) {
+        this(neuronsCount, activationFunction, withBias);
+        this.isDropoutEnabled = isDropoutEnabled;
     }
 
-    public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction, boolean isDropoutEnabled) {
-        this(neuronsCount, activationFunction);
-        this.isDropoutEnabled = isDropoutEnabled;
+    protected void createNeurons(int neuronsCount, boolean withBias) {
+        neurons = IntStream.range(0, neuronsCount)
+                .mapToObj(i -> Neuron.builder().bias(withBias ? 1 : 0).build())
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public double[] forwardPropagation(double[] f) {
         lastInput.set(f);
-
-        double[] b = enrichFeatureWithBias(f);
-        double[] rawResults = calculateRawResult(b);
-
+        double[] rawResults = calculateRawResult(f);
         return activate(rawResults);
     }
 
@@ -63,8 +64,8 @@ public class HiddenNeuronLayer implements NeuronLayer {
 
         IntStream.range(0, neurons.size()).forEach(i -> {
             Neuron n = neurons.get(i);
-            n.setFeatures(b);
-            rawResults[i] = n.calculate();
+            n.tryInit(b.length);
+            rawResults[i] = n.calculate(b);
         });
         return rawResults;
     }
@@ -77,21 +78,8 @@ public class HiddenNeuronLayer implements NeuronLayer {
         double[] layerError = mo.scalarMultiply(previousError, derivative);
 
         calculateAndSaveDeltaError(layerError);
-//        clip();
 
         return gradientVector(layerError);
-    }
-
-    private void clip() {
-        for (Neuron neuron : neurons) {
-            AtomicDoubleArray weightsError = neuron.getWeightsError();
-            for (int i = 0; i < weightsError.length(); i++) {
-                double dw = weightsError.get(i);
-                if (dw > 5 || dw < -5) {
-                    weightsError.set(i, dw > 5 ? 5 : -5);
-                }
-            }
-        }
     }
 
     protected double[] gradientVector(double[] layerError) {
@@ -107,30 +95,60 @@ public class HiddenNeuronLayer implements NeuronLayer {
     private double[][] createLayerWeightMatrix() {
         double[][] theta = new double[neurons.size()][];
 
-        IntStream.range(0, neurons.size()).forEach(i -> {
-            double[] weights = neurons.get(i).getWeights();
-            theta[i] = Arrays.copyOfRange(weights, 1, weights.length);
-        });
+        IntStream.range(0, neurons.size()).forEach(i ->
+            theta[i] = neurons.get(i).getWeights()
+        );
         return theta;
     }
 
-    // Theta T x E. Multiply weights on previous layer error.
-    protected void calculateAndSaveDeltaError(double[] error) {
-        Preconditions.checkArgument(error.length == neurons.size(), "Error length should be equal to neurons size.");
-
+    protected void addErrorsToNeurons(double[][] neuronsWeightsError) {
         IntStream.range(0, neurons.size()).forEach(i -> {
             Neuron neuron = neurons.get(i);
-            double[] we = new double[neuron.getWeights().length];
-            we[0] = error[i]; // bias error
-            for (int t = 1; t < we.length; t++) { // omitting bias
-                we[t] = error[i] * lastInput.get()[t - 1]; // the rate of change of the cost with respect to any weight in the network
-            }
-            neuron.addWeightsError(we);
-//            gradientCheck(we);
+            neuron.addWeightsError(neuronsWeightsError[i]);
         });
     }
 
-    private boolean isGradientCheckEnable = false;
+    protected void addBiasErrorsToNeurons(double[] neuronsBiasError) {
+        IntStream.range(0, neurons.size()).forEach(i -> {
+            Neuron neuron = neurons.get(i);
+            neuron.addBiasError(neuronsBiasError[i]);
+        });
+    }
+
+    protected double[][] calculateAndSaveDeltaError(double[] error) {
+        double[][] layerNetMatrix = calculateDeltaError(error);
+        addErrorsToNeurons(layerNetMatrix);
+
+        return layerNetMatrix;
+    }
+
+    // Theta T x E. Multiply weights on previous layer error.
+    protected double[][] calculateDeltaError(double[] error) {
+        Preconditions.checkArgument(error.length == neurons.size(), "Error length should be equal to neurons size.");
+
+        double[][] layerNetMatrix = new double[neurons.size()][];
+        double[] lastIn = lastInput.get();
+        int weightsSize = neurons.get(0).getWeights().length;
+        for (int i = 0; i < layerNetMatrix.length; i++) {
+            double[] we = new double[weightsSize];
+            for (int t = 0; t < we.length; t++) {
+                we[t] = error[i] * lastIn[t]; // the rate of change of the cost with respect to any weight in the network
+            }
+            layerNetMatrix[i] = we;
+        }
+
+//            gradientCheck(we);
+        return layerNetMatrix;
+    }
+
+    protected double[] calculateBiasDeltaError(double[] error) {
+        Preconditions.checkArgument(error.length == neurons.size(), "Error length should be equal to neurons size.");
+
+        MatrixOperations mo = Factory.getMatrixOperations();
+        return mo.copy(error);
+    }
+
+/*    private boolean isGradientCheckEnable = false;
 
     private void gradientCheck(double[] gradientDerivative) {
         if (!isGradientCheckEnable) return;
@@ -164,24 +182,13 @@ public class HiddenNeuronLayer implements NeuronLayer {
                 }
             }
         });
-    }
+    }*/
 
     @Override
     public void optimizeWeights(OptimizationAlgorithm optAlg) {
         neurons.forEach(neuron -> {
-            double[] weights = neuron.getWeights();
-            // sum of gradient errors
-            AtomicDoubleArray weightsError = neuron.getWeightsError();
-            double[] we = IntStream.range(0, weightsError.length()).mapToDouble(weightsError::get).toArray();
-
-            optAlg.optimizeWeights(weights, we);
-
+            optAlg.optimizeWeights(neuron);
             neuron.resetErrorWeights();
         });
-    }
-
-    @Override
-    public List<Neuron> getNeurons() {
-        return neurons;
     }
 }

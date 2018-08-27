@@ -3,6 +3,7 @@ package org.ml4bull.nn;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.time.StopWatch;
 import org.ml4bull.algorithm.ActivationFunction;
 import org.ml4bull.algorithm.StepFunction;
 import org.ml4bull.algorithm.optalg.OptimizationAlgorithm;
@@ -20,6 +21,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
@@ -82,7 +85,7 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         int processors = Runtime.getRuntime().availableProcessors();
         log.info("Processors count [{}]", processors);
 
-        CompletableFuture[] cfs = IntStream.range(0, processors)
+        CompletableFuture[] cfs = IntStream.range(0, 1)
                 .boxed()
                 .map(i -> CompletableFuture.runAsync(() -> training(dataSet, errorGoal, consumer))).toArray(CompletableFuture[]::new);
 
@@ -156,6 +159,11 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
     @SneakyThrows(InterruptedException.class)
     private double calculateAndGetItemError(double[] input, double[] output) {
+        StopWatch watch = null;
+        if (log.isDebugEnabled()) {
+            watch = new StopWatch();
+        }
+
         semaphore.acquire();
 
         // predict
@@ -173,7 +181,14 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
 
         calcSuccess(output, calcY);
 
-        return itemCostFunction(calcY, output);
+        double v = itemCostFunction(calcY, output);
+
+        if (watch != null) {
+            watch.stop();
+            log.debug("Total time: {}", watch.toString());
+        }
+
+        return v;
     }
 
     private void calcSuccess(double[] output, double[] calcY) {
@@ -184,17 +199,27 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
             successCounter.incrementAndGet();
     }
 
+    private Lock lock = new ReentrantLock();
+
     private void tryUpdateWeights() {
         if (!optAlg.isLimitReached()) return;
 
-        optimize();
-        semaphore.release(optAlg.getBatchSize());
+        if (lock.tryLock()) {
+            optimize();
+            semaphore.release(optAlg.getBatchSize());
+
+            lock.unlock();
+        } else {
+            log.info("=============  SHOULD BE IMPOSSIBLE !!!!!!!!!!! ================== 3");
+//            throw new RuntimeException();
+        }
     }
 
     private void optimize() {
         perceptronLayers.forEach(l -> l.optimizeWeights(optAlg));
     }
 
+    // cross-entropy
     private double itemCostFunction(double[] calculated, double[] expected) {
         return IntStream.range(0, calculated.length)
                 .mapToDouble(i ->

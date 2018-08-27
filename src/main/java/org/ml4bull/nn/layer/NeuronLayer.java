@@ -24,4 +24,8 @@ public interface NeuronLayer {
         System.arraycopy(f, 0, b, 1, f.length);
         return b;
     }
+
+    default double[] getLayerBiases() {
+        return getNeurons().stream().mapToDouble(Neuron::getBias).toArray();
+    }
 }

@@ -121,7 +121,7 @@ public class MatrixOperationsSimple implements MatrixOperations {
 
     @Override
     public double[][] sum(double[][] delta, double[][] tmpE) {
-        if (delta == null) return tmpE;
+        Preconditions.checkArgument(delta.length != 0 && delta.length == tmpE.length && delta[0].length == tmpE[0].length, "Same matrices");
 
         ((DoubleIterator) (l, e) -> delta[l][e] += tmpE[l][e]).iterate(delta);
 

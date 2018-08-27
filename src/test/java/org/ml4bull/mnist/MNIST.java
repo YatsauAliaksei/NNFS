@@ -3,9 +3,11 @@ package org.ml4bull.mnist;
 import com.google.common.base.Stopwatch;
 import lombok.extern.log4j.Log4j2;
 import org.junit.Test;
+import org.ml4bull.algorithm.HyperbolicTangentFunction;
 import org.ml4bull.algorithm.SigmoidFunction;
 import org.ml4bull.algorithm.SoftmaxFunction;
 import org.ml4bull.algorithm.StepFunction;
+import org.ml4bull.algorithm.optalg.ADAMGradientDescent;
 import org.ml4bull.algorithm.optalg.GradientDescent;
 import org.ml4bull.algorithm.optalg.RMSPropGradientDescent;
 import org.ml4bull.nn.MultiLayerPerceptron;
@@ -14,6 +16,7 @@ import org.ml4bull.nn.layer.HiddenNeuronLayer;
 import org.ml4bull.util.MLUtils;
 
 import java.io.IOException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Log4j2
@@ -25,18 +28,23 @@ public class MNIST {
     public void main() {
         Stopwatch stopwatch = Stopwatch.createStarted();
         DataSet trainDS = getTrainDS();
-        System.out.println("Watch: " + stopwatch.toString());
-        log.info("Train data set loaded.");
+        log.info("Watch: {}", stopwatch.toString());
 
-        double[] sample = trainDS.getInput()[400];
-        double[] sampleLabel = trainDS.getOutput()[400];
+        int trainDataSize = trainDS.getInput().length;
+        log.info("Train data set loaded. Size: {}", trainDataSize);
 
+        int randomSampleIndex = ThreadLocalRandom.current().nextInt(0, trainDataSize);
+        double[] sample = trainDS.getInput()[randomSampleIndex];
+        double[] sampleLabel = trainDS.getOutput()[randomSampleIndex];
+
+        log.info("Sample index: " + randomSampleIndex);
         printSample(sample, sampleLabel);
 
-        GradientDescent optAlg = RMSPropGradientDescent.build()
+        GradientDescent optAlg = RMSPropGradientDescent.buildRMS()
+//        GradientDescent optAlg = ADAMGradientDescent.buildAdam()
                 .learningRate(0.01)
                 .withRegularization(true)
-                .batchSize(10)
+                .batchSize(20)
                 .build();
 
         MultiLayerPerceptron sp = MultiLayerPerceptron.builder()
@@ -46,7 +54,8 @@ public class MNIST {
                 .optAlg(optAlg)
                 .build();
 
-        sp.addHiddenLayer(new HiddenNeuronLayer(300, new SigmoidFunction()));
+        sp.addHiddenLayer(new HiddenNeuronLayer(200, new SigmoidFunction()));
+        sp.addHiddenLayer(new HiddenNeuronLayer(200, new HyperbolicTangentFunction()));
         normalize(trainDS);
 
         double error;
@@ -54,7 +63,7 @@ public class MNIST {
         do {
             error = sp.train(trainDS, true);
             log.info("Epoch: {} | Error: {}", ++epoch, +error);
-        } while (error > 1e-2);
+        } while (error > 1e-1);
 
         DataSet testDS = getTestDS();
         log.info("Test data set loaded.");

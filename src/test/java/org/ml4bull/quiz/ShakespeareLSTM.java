@@ -4,11 +4,11 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
-import org.ml4bull.algorithm.optalg.ADAMGradientDescent;
 import org.ml4bull.algorithm.optalg.GradientDescent;
 import org.ml4bull.algorithm.optalg.RMSPropGradientDescent;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
+import org.ml4bull.nn.layer.LSTMNeuronLayer;
 import org.ml4bull.nn.layer.LinearNeuronLayer;
 import org.ml4bull.nn.layer.RecurrentNeuronLayer;
 import org.ml4bull.util.MLUtils;
@@ -25,7 +25,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Log4j2
-public class ShakespeareRNN {
+public class ShakespeareLSTM {
 
     // russian
     private static int charNum = 33; // plus space
@@ -36,33 +36,52 @@ public class ShakespeareRNN {
 //    private static int leading = 96;
 
     public static void main(String[] args) {
-//        GradientDescent optAlg = RMSPropGradientDescent.buildRMS()
-        GradientDescent optAlg = ADAMGradientDescent.buildAdam()
+        GradientDescent optAlg = RMSPropGradientDescent.buildRMS()
                 .learningRate(0.01)
-                .withRegularization(true)
-                .batchSize(10)
+                .batchSize(50)
                 .build();
 
         MultiLayerPerceptron mlp = MultiLayerPerceptron.builder()
-                .outputLayer(new LinearNeuronLayer())
+//                .outputLayer(new LinearNeuronLayer())
                 .input(charNum)
                 .output(charNum)
                 .optAlg(optAlg).build();
 
-        mlp.addHiddenLayer(new RecurrentNeuronLayer(100, charNum, 15));
+        mlp.addHiddenLayer(new LSTMNeuronLayer(200, null, 20));
 
         DataSet trainDS = createDS();
         log.info("=============================================\n" +
                 "Train data set created. Size: {}", trainDS.getInput().length);
 
-        mlp.trainAsync(trainDS, 1e-1, (e) -> {
-//            testing(mlp)
-        });
+        mlp.trainAsync(trainDS, 1e-1, (e) -> testing(mlp));
+
+/*        int processors = Runtime.getRuntime().availableProcessors();
+        log.info("Processors count [{}]", processors);
+
+        CompletableFuture[] cfs = IntStream.range(0, processors)
+                .boxed()
+                .map(i -> CompletableFuture.runAsync(() -> training(mlp, trainDS))).toArray(CompletableFuture[]::new);
+
+        CompletableFuture.allOf(cfs).join();*/
 
         log.info("Starting testing...");
 
         testing(mlp);
     }
+
+/*    private static void training(MultiLayerPerceptron mlp, DataSet trainDS) {
+        double error;
+        int epoch = 0;
+        int k = 0;
+        do {
+            error = mlp.train(trainDS, false);
+            log.info("Epoch: {} | Error: {}", ++epoch, +error);
+
+            if (k++ % 2 == 0) {  // each k times
+                testing(mlp);
+            }
+        } while (error > 1e-1);
+    }*/
 
     private static void testing(MultiLayerPerceptron mlp) {
         int startLetter = ThreadLocalRandom.current().nextInt('а', 'я' + 1); // russian
@@ -152,7 +171,7 @@ public class ShakespeareRNN {
     }
 
     private static List<String> readFile() throws IOException {
-//                String url = "https://s3.amazonaws.com/dl4j-distribution/pg100.txt";
+                String url = "https://s3.amazonaws.com/dl4j-distribution/pg100.txt";
 //        String url = "https://cs.stanford.edu/people/karpathy/char-rnn/shakespear.txt";
 //        String url = "https://sherlock-holm.es/stories/plain-text/cano.txt";
 
@@ -163,7 +182,7 @@ public class ShakespeareRNN {
         String fileLocation = tempDir + "/chebur.txt";    //Storage location from downloaded file
         File f = new File(fileLocation);
         if (!f.exists()) {
-//            FileUtils.copyURLToFile(new URL(url), f);
+            FileUtils.copyURLToFile(new URL(url), f);
             log.info("File downloaded to " + f.getAbsolutePath());
         } else {
             log.info("Using existing text file at " + f.getAbsolutePath());

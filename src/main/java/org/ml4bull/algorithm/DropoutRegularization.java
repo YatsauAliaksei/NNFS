@@ -15,7 +15,7 @@ public class DropoutRegularization {
     public double[] dropout(double[] input) {
         double[] randomDropout = MLUtils.getRandomDropout(input.length);
         randomDropout = stepFunction.activate(randomDropout);
-        randomDropout[0] = 1; // omit bias
+//        randomDropout[0] = 1; // omit bias
 
         MatrixOperations mo = Factory.getMatrixOperations();
         return mo.scalarMultiply(input, randomDropout);

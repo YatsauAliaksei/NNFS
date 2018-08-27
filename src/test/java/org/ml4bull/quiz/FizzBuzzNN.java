@@ -21,7 +21,7 @@ public class FizzBuzzNN {
         FizzBuzzNN fb = new FizzBuzzNN();
         DataSet trainSet = fb.getTrainSet();
 
-        GradientDescent optAlg = RMSPropGradientDescent.build()
+        GradientDescent optAlg = RMSPropGradientDescent.buildRMS()
                 .learningRate(0.001)
                 .withRegularization(true)
                 .batchSize(17)

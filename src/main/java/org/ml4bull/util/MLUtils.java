@@ -32,9 +32,9 @@ public class MLUtils {
 
     public static double[] getRandomWeights(int size) {
         ThreadLocalRandom tlr = ThreadLocalRandom.current();
-        return tlr.doubles(size, -0.5, 0.5).map(v -> {
+        return tlr.doubles(size, -0.3, 0.3).map(v -> {
             if (v == 0) {
-                v = ThreadLocalRandom.current().nextDouble(1e-10, .5); // yes, let it be positive
+                v = ThreadLocalRandom.current().nextDouble(1e-10, .3); // yes, let it be positive
             }
             return v;
         }).toArray();

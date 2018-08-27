@@ -1,19 +1,24 @@
 package org.ml4bull.algorithm.optalg;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.ml4bull.nn.Neuron;
 
 @Builder
+@AllArgsConstructor
 public class GradientDescent implements OptimizationAlgorithm {
 
     @Getter
     protected int batchSize;
     @Getter
     @Setter
-    protected double regularizationRate = 8e-6;
+    @Builder.Default
+    protected double regularizationRate = 1e-6;
     @Getter
     @Setter
+    @Builder.Default
     protected double learningRate = 1e-2;
     @Getter
     private int counter;
@@ -30,20 +35,14 @@ public class GradientDescent implements OptimizationAlgorithm {
     }
 
     @Override
-    public void optimizeWeights(double[] weights, double[] weightsError) {
-        for (int w = 0; w < weightsError.length; w++) {
+    public void optimizeWeights(Neuron neuron) {
+        double[] weights = neuron.getWeights();
+        double[] weightsError = neuron.getWeightsErrorPrimitive();
 
-            // omit bias regularization
-            double regularization = w == 0 ? 0 : regularizationRate * weights[w];
-            if (!withRegularization) regularization = 0;
+        for (int w = 0; w < weightsError.length; w++) {
+            double regularization = withRegularization ? regularizationRate * weights[w] : 0;
 
             weights[w] -= learningRate * (weightsError[w] + regularization) / batchSize;
         }
-    }
-
-    public static class GradientDescentBuilder {
-        private double regularizationRate = 8e-6;
-        private double learningRate = 1e-2;
-//        private AtomicInteger counter = new AtomicInteger();
     }
 }

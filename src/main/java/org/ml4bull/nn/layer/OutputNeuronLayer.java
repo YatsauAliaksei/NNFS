@@ -1,6 +1,9 @@
 package org.ml4bull.nn.layer;
 
 import org.ml4bull.algorithm.ActivationFunction;
+import org.ml4bull.matrix.MatrixOperations;
+import org.ml4bull.util.Factory;
+import org.ml4bull.util.MLUtils;
 
 public class OutputNeuronLayer extends HiddenNeuronLayer {
 
@@ -12,15 +15,14 @@ public class OutputNeuronLayer extends HiddenNeuronLayer {
     @Override
     public double[] backPropagation(double[] expected) { // In output layer error is simple expected value.
 //         calculate out error start point for back propagation.
-        double[] errorOut = new double[expected.length];
-        double[] result = lastResult.get();
-        for (int j = 0; j < expected.length; j++) {
-            errorOut[j] = result[j] - expected[j];
-        }
+        MatrixOperations mo = Factory.getMatrixOperations();
+        double[] result = mo.copy(lastResult.get());
 
-//        int target = expected.length - MLUtils.transformClassToInt(expected);
-//        errorOut[target] -= 1;
+        int target = expected.length - MLUtils.transformClassToInt(expected);
+        result[target] -= 1;
 
-        return super.backPropagation(errorOut);
+        calculateAndSaveDeltaError(result);
+
+        return gradientVector(result);
     }
 }

@@ -8,8 +8,8 @@ import java.util.List;
 
 public class InputNeuronLayer implements NeuronLayer {
     private int inputSize;
-    private boolean isDropEnabled = false;
-    private DropoutRegularization dropoutRegularization = new DropoutRegularization(0.005);
+    private boolean isDropEnabled = true;
+    private DropoutRegularization dropoutRegularization = new DropoutRegularization(0.05);
 
     public InputNeuronLayer(int input) {
         this.inputSize = input;
