@@ -1,12 +1,14 @@
 package org.ml4bull.util;
 
 import com.google.common.base.Preconditions;
+import lombok.Getter;
 
 import java.util.Objects;
 
 
 public class Memory<T> {
     private Node latest;
+    @Getter
     private int maxSize;
     private int size;
 
@@ -71,5 +73,9 @@ public class Memory<T> {
 
     public int size() {
         return size;
+    }
+
+    public boolean isEmpty() {
+        return size == 0;
     }
 }

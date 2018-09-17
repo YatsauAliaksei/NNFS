@@ -45,16 +45,12 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
     private void initThreadLocals(int memorySize) {
         if (hiddenStateMemory.get() == null) {
             hiddenStateMemory.set(new Memory<>(memorySize));
-        }
-        if (featureMemory.get() == null) {
-            featureMemory.set(new Memory<>(memorySize));
-        }
-        if (outMemory.get() == null) {
-            outMemory.set(new Memory<>(memorySize));
-        }
-        if (expectedMemory.get() == null) {
-            expectedMemory.set(new Memory<>(memorySize));
-        }
+        } else
+            return;
+
+        featureMemory.set(new Memory<>(memorySize));
+        outMemory.set(new Memory<>(memorySize));
+        expectedMemory.set(new Memory<>(memorySize));
     }
 
     @Override
@@ -141,11 +137,14 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
             dhNext = historyLayer.gradientVector(dhRaw);
         }
 
-        shrink(dWhh, timeSize);
-        shrink(dWxh, timeSize);
-        shrink(dWhy, timeSize);
-        shrink(dby, timeSize);
-        shrink(dbh, timeSize);
+        MLUtils.shrink(timeSize, dWhh, dWxh, dWhy);
+        MLUtils.shrink(timeSize, dby, dbh);
+//        MLUtils.clip(dWhh, -5, 5);
+//        MLUtils.clip(dWxh, -5, 5);
+//        MLUtils.clip(dWhy, -5, 5);
+//
+//        MLUtils.clip(dby, -5, 5);
+//        MLUtils.clip(dbh, -5, 5);
 
         // weights
         historyLayer.addErrorsToNeurons(dWhh);
@@ -158,77 +157,6 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
 
         return dhNext;
     }
-
-/*    @Override
-    public double[] backPropagation(double[] previousError) {
-        MatrixOperations mo = Factory.getMatrixOperations();
-
-        expectedMemory.get().add(previousError);
-        int target = previousError.length - MLUtils.transformClassToInt(previousError);
-        calculateLoss(target);
-
-        double[] layerError = new double[neurons.size()];
-        double[] dby = new double[outLayer.neurons.size()]; // Y bias
-        double[] dbh = new double[historyLayer.neurons.size()]; // H bias
-        double[] dHt = new double[historyLayer.neurons.size()];
-        double[][] dWhy = new double[outLayer.neurons.size()][outLayer.neurons.get(0).getWeights().length];
-        double[][] dWhh = new double[historyLayer.neurons.size()][historyLayer.neurons.get(0).getWeights().length];
-        double[][] dWxh = new double[neurons.size()][neurons.get(0).getWeights().length];
-
-        int timeSize = hiddenStateMemory.get().size();
-        for (int i = 0; i < timeSize; i++) {
-
-            // y processing
-            double[] yOut = outMemory.get().get(i);
-            double[] expected = expectedMemory.get().get(i);
-            double[] dY = mo.copy(yOut);
-
-            target = expected.length - MLUtils.transformClassToInt(expected);
-            dY[target] -= 1;
-
-            outLayer.lastInput.set(hiddenStateMemory.get().get(i)); // set time state
-            outLayer.lastResult.set(yOut);
-
-            dWhy = mo.sum(dWhy, outLayer.calculateDeltaError(dY));
-            dby = mo.sum(dby, outLayer.calculateBiasDeltaError(dY));
-
-            double[] dH = outLayer.gradientVector(dY);
-
-            // current layer dW
-            double[] derivative = activationFunction.derivative(hiddenStateMemory.get().get(i));
-            dHt = mo.sum(dHt, historyLayer.gradientVector(derivative));
-            layerError = mo.sum(dH, dHt);
-
-            lastInput.set(featureMemory.get().get(i));  // set time state
-//            lastResult.set(hiddenStateMemory.get().get(i));
-            dWxh = mo.sum(dWxh, calculateDeltaError(layerError));
-
-            // history layer update dW
-            historyLayer.lastInput.set(i < timeSize - 1 ? hiddenStateMemory.get().get(i + 1) : new double[neurons.size()]); // set time state
-            dWhh = mo.sum(dWhh, historyLayer.calculateDeltaError(layerError));
-            dbh = mo.sum(dbh, historyLayer.calculateBiasDeltaError(layerError));
-        }
-
-        // shrinking weights
-        shrink(dWhh, timeSize);
-        shrink(dWxh, timeSize);
-        shrink(dWhy, timeSize);
-
-        // shrinking biases
-        shrink(dby, timeSize);
-        shrink(dbh, timeSize);
-
-        // setting weights
-        historyLayer.addErrorsToNeurons(dWhh);
-        outLayer.addErrorsToNeurons(dWhy);
-        addErrorsToNeurons(dWxh);
-
-        // setting biases
-        historyLayer.addBiasErrorsToNeurons(dbh);
-        outLayer.addBiasErrorsToNeurons(dby);
-
-        return layerError;
-    }*/
 
     private StopWatch stopwatch = new StopWatch(); // todo: to remove
 
@@ -252,19 +180,5 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
         historyLayer.optimizeWeights(optAlg);
         outLayer.optimizeWeights(optAlg);
         super.optimizeWeights(optAlg);
-    }
-
-    private void shrink(double[][] layerWeights, int denominator) {
-        for (double[] neuronWeights : layerWeights) {
-            for (int i = 0; i < neuronWeights.length; i++) {
-                neuronWeights[i] /= denominator;
-            }
-        }
-    }
-
-    private void shrink(double[] biases, int denominator) {
-        for (int i = 0; i < biases.length; i++) {
-            biases[i] /= denominator;
-        }
     }
 }

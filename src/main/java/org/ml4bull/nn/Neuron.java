@@ -51,7 +51,7 @@ public class Neuron {
     }
 
     public double getBiasErrorSum() {
-        return biasErrorQueue.parallelStream().mapToDouble(Double::doubleValue).sum();
+        return biasErrorQueue.stream().mapToDouble(Double::doubleValue).sum();
     }
 
     public void resetErrorWeights() {

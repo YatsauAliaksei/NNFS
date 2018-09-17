@@ -1,5 +1,6 @@
 package org.ml4bull.nn;
 
+import com.google.common.base.Stopwatch;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -77,28 +78,18 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         return result;
     }
 
-    /**
-     * Train {@param dataSet} using all available threads.
-     * // TODO: Success rate broken in this case.
-     */
-    public void trainAsync(DataSet dataSet, double errorGoal, Consumer<Double> consumer) {
-        int processors = Runtime.getRuntime().availableProcessors();
-        log.info("Processors count [{}]", processors);
-
-        CompletableFuture[] cfs = IntStream.range(0, 1)
-                .boxed()
-                .map(i -> CompletableFuture.runAsync(() -> training(dataSet, errorGoal, consumer))).toArray(CompletableFuture[]::new);
-
-        CompletableFuture.allOf(cfs).join();
-    }
-
-    private void training(DataSet trainDS, double errorGoal, Consumer<Double> consumer) {
+    public void training(DataSet trainDS, double errorGoal, Consumer<Double> consumer) {
         double error;
         int epoch = 0;
+        Stopwatch stopwatch = Stopwatch.createUnstarted();
         do {
+            stopwatch.start();
             error = train(trainDS, false);
-            log.info("Epoch: {} | Error: {}", ++epoch, +error);
+            log.info("Epoch: {} | Error: {}", ++epoch, error);
 
+            stopwatch.stop();
+            System.out.println("Time: " + stopwatch.toString());
+            stopwatch.reset();
             consumer.accept(error);
         } while (error > errorGoal);
     }

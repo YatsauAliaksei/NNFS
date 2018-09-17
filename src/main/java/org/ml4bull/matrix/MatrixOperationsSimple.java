@@ -50,8 +50,7 @@ public class MatrixOperationsSimple implements MatrixOperations {
     // element wise multiplication.
     @Override
     public double[] scalarMultiply(double[] matrix1, double[] matrix2) {
-        if (matrix1.length != matrix2.length)
-            throw new IllegalArgumentException("Row number of first matrix should be equal to column number of second matrix.");
+        Preconditions.checkArgument(matrix1.length == matrix2.length, "Row number of first matrix should be equal to column number of second matrix.");
 
         double[] result = new double[matrix1.length];
         for (int i = 0; i < matrix1.length; i++) {
@@ -63,8 +62,7 @@ public class MatrixOperationsSimple implements MatrixOperations {
 
     @Override
     public double[][] multiply(double[][] matrix1, double[][] matrix2) {
-        if (matrix1[0].length != matrix2.length)
-            throw new IllegalArgumentException("Row number of first matrix should be equal to column number of second matrix.");
+        Preconditions.checkArgument(matrix1[0].length == matrix2.length, "Row number of first matrix should be equal to column number of second matrix.");
 
         double[][] result = new double[matrix1.length][matrix2[0].length];
         ((DoubleIterator) (l, e) -> {
@@ -79,13 +77,10 @@ public class MatrixOperationsSimple implements MatrixOperations {
 
     /**
      * @param matrix1 - T matrix
-     * @param matrix2
-     * @return
      */
     @Override
     public double[] multiplySingleDim(double[][] matrix1, double[] matrix2) {
-        if (matrix1[0].length != matrix2.length)
-            throw new IllegalArgumentException("Row number of first matrix should be equal to column number of second matrix.");
+        Preconditions.checkArgument(matrix1[0].length == matrix2.length, "Row number of first matrix should be equal to column number of second matrix.");
 
         double[] result = new double[matrix1.length];
 

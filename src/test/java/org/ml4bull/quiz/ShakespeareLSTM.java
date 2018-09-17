@@ -3,15 +3,15 @@ package org.ml4bull.quiz;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
-import org.junit.Test;
+import org.apache.commons.lang3.StringUtils;
 import org.ml4bull.algorithm.optalg.GradientDescent;
 import org.ml4bull.algorithm.optalg.RMSPropGradientDescent;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
 import org.ml4bull.nn.layer.LSTMNeuronLayer;
+import org.ml4bull.nn.layer.LSTMNeuronParallelLayer;
 import org.ml4bull.nn.layer.LinearNeuronLayer;
-import org.ml4bull.nn.layer.RecurrentNeuronLayer;
-import org.ml4bull.util.MLUtils;
+import org.ml4bull.util.CharUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,69 +19,42 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Log4j2
 public class ShakespeareLSTM {
 
     // russian
-    private static int charNum = 33; // plus space
-    private static int leading = 1071;
+    private static CharUtils.Language language = CharUtils.Language.RUSSIAN;
 
-    // english
-//    private static int charNum = 27;
-//    private static int leading = 96;
 
     public static void main(String[] args) {
         GradientDescent optAlg = RMSPropGradientDescent.buildRMS()
+//        GradientDescent optAlg = GradientDescent.builder()
+//        GradientDescent optAlg = ADAMGradientDescent.buildAdam()
                 .learningRate(0.01)
-                .batchSize(50)
+                .withRegularization(false)
+                .batchSize(10)
                 .build();
 
         MultiLayerPerceptron mlp = MultiLayerPerceptron.builder()
-//                .outputLayer(new LinearNeuronLayer())
-                .input(charNum)
-                .output(charNum)
+                .outputLayer(new LinearNeuronLayer())
+                .input(language.getCharNum())
+                .output(language.getCharNum())
                 .optAlg(optAlg).build();
 
-        mlp.addHiddenLayer(new LSTMNeuronLayer(200, null, 20));
+        LSTMNeuronLayer lstmNeuronLayer = new LSTMNeuronLayer(100, language.getCharNum(), null, 10, 10);
+        mlp.addHiddenLayer(lstmNeuronLayer);
 
         DataSet trainDS = createDS();
         log.info("=============================================\n" +
                 "Train data set created. Size: {}", trainDS.getInput().length);
 
-        mlp.trainAsync(trainDS, 1e-1, (e) -> testing(mlp));
-
-/*        int processors = Runtime.getRuntime().availableProcessors();
-        log.info("Processors count [{}]", processors);
-
-        CompletableFuture[] cfs = IntStream.range(0, processors)
-                .boxed()
-                .map(i -> CompletableFuture.runAsync(() -> training(mlp, trainDS))).toArray(CompletableFuture[]::new);
-
-        CompletableFuture.allOf(cfs).join();*/
+        mlp.training(trainDS, 1e-1, (e) -> testing(mlp));
 
         log.info("Starting testing...");
 
         testing(mlp);
     }
-
-/*    private static void training(MultiLayerPerceptron mlp, DataSet trainDS) {
-        double error;
-        int epoch = 0;
-        int k = 0;
-        do {
-            error = mlp.train(trainDS, false);
-            log.info("Epoch: {} | Error: {}", ++epoch, +error);
-
-            if (k++ % 2 == 0) {  // each k times
-                testing(mlp);
-            }
-        } while (error > 1e-1);
-    }*/
 
     private static void testing(MultiLayerPerceptron mlp) {
         int startLetter = ThreadLocalRandom.current().nextInt('а', 'я' + 1); // russian
@@ -115,59 +88,30 @@ public class ShakespeareLSTM {
     }
 
     private static char vectorToChar(double[] v) {
-        int maxIndex = 0;
-        for (int i = 0; i < v.length; i++) {
-            if (v[i] > v[maxIndex])
-                maxIndex = i;
-        }
-
-        double[] predictedV = new double[charNum];
-        predictedV[maxIndex] = 1;
-
-        if (maxIndex == 0)
-            return ' ';
-
-        return (char) (MLUtils.transformClassToInt(predictedV) + leading);
+        return CharUtils.vectorToChar(v, language);
     }
 
     private static double[] charToVector(char c) {
-        return MLUtils.transformIntToClass(c == ' ' ? charNum : c - leading, charNum);
+        return CharUtils.charToVector(c, language);
     }
 
     // a-z
     @SneakyThrows
     private static char[] shakespeareArt() {
+//        String s = Japan.japan.toLowerCase().replaceAll("[^а-я ]", "");
+//        log.info(s);
+//        return s.toCharArray();
+
         List<String> lines = readFile();
         return lines.stream()
-//                .map(lines::get)
+                .filter(StringUtils::isNotBlank)
 //                .map(word -> word.toLowerCase().replaceAll("[^a-z ]", ""))
                 .map(word -> word.toLowerCase().replaceAll("[^а-я ]", "")) // russian
-//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
-//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
-//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
                 .map(String::trim)
                 .peek(log::info)
                 .reduce((l1, l2) -> l1 + " " + l2)
                 .orElseThrow(RuntimeException::new)
                 .toCharArray();
-
-/*        return lines.stream()
-                .filter(StringUtils::isNotBlank)
-                .filter(l -> l.length() < 70)
-                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
-                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
-//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
-//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
-//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 4)
-//                .flatMap(line -> Splitter.on(" ").trimResults().splitToList(line).stream())
-                .map(String::toLowerCase)
-                .map(word -> word.replaceAll("[^a-z ]", ""))
-                .map(String::trim)
-                .peek(log::info)
-//                .filter(StringUtils::isNotBlank)
-                .reduce((l1, l2) -> l1 + " " + l2)
-                .orElseThrow(RuntimeException::new)
-                .toCharArray();*/
     }
 
     private static List<String> readFile() throws IOException {
@@ -188,57 +132,5 @@ public class ShakespeareLSTM {
             log.info("Using existing text file at " + f.getAbsolutePath());
         }
         return Files.readAllLines(f.toPath());
-    }
-
-    @Test
-    public void russianChars() {
-        System.out.println((int) 'а' + "-" + (int) 'я');
-        AtomicInteger k = new AtomicInteger();
-        IntStream.rangeClosed(1072, 1103)
-                .peek(i -> k.incrementAndGet())
-                .forEach(i -> System.out.println((char) i + " - " + (i - leading)));
-
-        System.out.println("Total:" + k);
-
-        double[] doubles = charToVector('а'); // russian A
-        char a = vectorToChar(doubles);
-
-        assertThat(a).isEqualTo('а');
-
-        doubles = charToVector(' ');
-        char space = vectorToChar(doubles);
-
-        assertThat(space).isEqualTo(' ');
-
-    }
-
-    @Test
-    public void charsTest() {
-        System.out.println("Space: " + (int) ' ');
-
-        for (int i = 'a'; i <= 'z'; i++)
-            System.out.println(((char) i) + " - " + (i - 96));
-
-        System.out.println("AxA12 -$ /{1fas!fR}".replaceAll("[^а-я ]", ""));
-
-        double[] doubles = charToVector('a');
-        char a = vectorToChar(doubles);
-
-        assertThat(a).isEqualTo('a');
-
-        doubles = charToVector(' ');
-        char space = vectorToChar(doubles);
-
-        assertThat(space).isEqualTo(' ');
-    }
-
-    private double[][] wordToVector(String word) {
-        char[] chars = word.toCharArray();
-        double[][] result = new double[chars.length + 1][];
-        for (int i = 0; i < chars.length; i++) {
-            result[i] = charToVector(chars[i]);
-        }
-        result[result.length - 1] = MLUtils.transformIntToClass(charNum, charNum); // space
-        return result;
     }
 }

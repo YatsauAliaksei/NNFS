@@ -2,60 +2,49 @@ package org.ml4bull.quiz;
 
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.io.FileUtils;
-import org.junit.Test;
-import org.ml4bull.algorithm.optalg.ADAMGradientDescent;
+import org.apache.commons.lang3.StringUtils;
 import org.ml4bull.algorithm.optalg.GradientDescent;
 import org.ml4bull.algorithm.optalg.RMSPropGradientDescent;
 import org.ml4bull.nn.MultiLayerPerceptron;
 import org.ml4bull.nn.data.DataSet;
 import org.ml4bull.nn.layer.LinearNeuronLayer;
 import org.ml4bull.nn.layer.RecurrentNeuronLayer;
-import org.ml4bull.util.MLUtils;
+import org.ml4bull.util.CharUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Log4j2
 public class ShakespeareRNN {
 
     // russian
-    private static int charNum = 33; // plus space
-    private static int leading = 1071;
-
-    // english
-//    private static int charNum = 27;
-//    private static int leading = 96;
+    private static CharUtils.Language language = CharUtils.Language.RUSSIAN;
 
     public static void main(String[] args) {
-//        GradientDescent optAlg = RMSPropGradientDescent.buildRMS()
-        GradientDescent optAlg = ADAMGradientDescent.buildAdam()
+        GradientDescent optAlg = RMSPropGradientDescent.buildRMS()
+//        GradientDescent optAlg = GradientDescent.builder()
+//        GradientDescent optAlg = ADAMGradientDescent.buildAdam()
                 .learningRate(0.01)
-                .withRegularization(true)
+                .withRegularization(false)
                 .batchSize(10)
                 .build();
 
         MultiLayerPerceptron mlp = MultiLayerPerceptron.builder()
                 .outputLayer(new LinearNeuronLayer())
-                .input(charNum)
-                .output(charNum)
+                .input(language.getCharNum())
+                .output(language.getCharNum())
                 .optAlg(optAlg).build();
 
-        mlp.addHiddenLayer(new RecurrentNeuronLayer(100, charNum, 15));
+        mlp.addHiddenLayer(new RecurrentNeuronLayer(150, language.getCharNum(), 30));
 
         DataSet trainDS = createDS();
         log.info("=============================================\n" +
                 "Train data set created. Size: {}", trainDS.getInput().length);
 
-        mlp.trainAsync(trainDS, 1e-1, (e) -> {
+        mlp.training(trainDS, 2e-1, (e) -> {
 //            testing(mlp)
         });
 
@@ -68,12 +57,12 @@ public class ShakespeareRNN {
         int startLetter = ThreadLocalRandom.current().nextInt('а', 'я' + 1); // russian
 //        int startLetter = ThreadLocalRandom.current().nextInt('a', 'z' + 1);
 
-        double[] v = charToVector((char) startLetter); // starting letter
+        double[] v = CharUtils.charToVector((char) startLetter, language); // starting letter
 
         System.out.println("========================== TESTING ===========================");
-        int k = 500;
+        int k = 1000;
         while (k-- > 0) {
-            System.out.print(vectorToChar(v));
+            System.out.print(CharUtils.vectorToChar(v, language));
             v = mlp.classify(v);
         }
         System.out.println();
@@ -86,33 +75,13 @@ public class ShakespeareRNN {
         double[][] input = new double[text.length][];
         double[][] output = new double[text.length][];
         for (int i = 0; i < text.length - 1; i++) {
-            input[i] = charToVector(text[i]);
-            output[i] = charToVector(text[i + 1]);
+            input[i] = CharUtils.charToVector(text[i], language);
+            output[i] = CharUtils.charToVector(text[i + 1], language);
         }
-        input[text.length - 1] = charToVector(text[text.length - 1]);
-        output[text.length - 1] = charToVector(' ');
+        input[text.length - 1] = CharUtils.charToVector(text[text.length - 1], language);
+        output[text.length - 1] = CharUtils.charToVector(' ', language);
 
         return new DataSet(input, output);
-    }
-
-    private static char vectorToChar(double[] v) {
-        int maxIndex = 0;
-        for (int i = 0; i < v.length; i++) {
-            if (v[i] > v[maxIndex])
-                maxIndex = i;
-        }
-
-        double[] predictedV = new double[charNum];
-        predictedV[maxIndex] = 1;
-
-        if (maxIndex == 0)
-            return ' ';
-
-        return (char) (MLUtils.transformClassToInt(predictedV) + leading);
-    }
-
-    private static double[] charToVector(char c) {
-        return MLUtils.transformIntToClass(c == ' ' ? charNum : c - leading, charNum);
     }
 
     // a-z
@@ -120,35 +89,15 @@ public class ShakespeareRNN {
     private static char[] shakespeareArt() {
         List<String> lines = readFile();
         return lines.stream()
-//                .map(lines::get)
+                .filter(StringUtils::isNotBlank)
 //                .map(word -> word.toLowerCase().replaceAll("[^a-z ]", ""))
                 .map(word -> word.toLowerCase().replaceAll("[^а-я ]", "")) // russian
-//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
-//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
-//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
+//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8) // take only ~10%
                 .map(String::trim)
                 .peek(log::info)
                 .reduce((l1, l2) -> l1 + " " + l2)
                 .orElseThrow(RuntimeException::new)
                 .toCharArray();
-
-/*        return lines.stream()
-                .filter(StringUtils::isNotBlank)
-                .filter(l -> l.length() < 70)
-                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
-                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
-//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
-//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 8)
-//                .filter(l -> ThreadLocalRandom.current().nextInt(0, 10) > 4)
-//                .flatMap(line -> Splitter.on(" ").trimResults().splitToList(line).stream())
-                .map(String::toLowerCase)
-                .map(word -> word.replaceAll("[^a-z ]", ""))
-                .map(String::trim)
-                .peek(log::info)
-//                .filter(StringUtils::isNotBlank)
-                .reduce((l1, l2) -> l1 + " " + l2)
-                .orElseThrow(RuntimeException::new)
-                .toCharArray();*/
     }
 
     private static List<String> readFile() throws IOException {
@@ -169,57 +118,5 @@ public class ShakespeareRNN {
             log.info("Using existing text file at " + f.getAbsolutePath());
         }
         return Files.readAllLines(f.toPath());
-    }
-
-    @Test
-    public void russianChars() {
-        System.out.println((int) 'а' + "-" + (int) 'я');
-        AtomicInteger k = new AtomicInteger();
-        IntStream.rangeClosed(1072, 1103)
-                .peek(i -> k.incrementAndGet())
-                .forEach(i -> System.out.println((char) i + " - " + (i - leading)));
-
-        System.out.println("Total:" + k);
-
-        double[] doubles = charToVector('а'); // russian A
-        char a = vectorToChar(doubles);
-
-        assertThat(a).isEqualTo('а');
-
-        doubles = charToVector(' ');
-        char space = vectorToChar(doubles);
-
-        assertThat(space).isEqualTo(' ');
-
-    }
-
-    @Test
-    public void charsTest() {
-        System.out.println("Space: " + (int) ' ');
-
-        for (int i = 'a'; i <= 'z'; i++)
-            System.out.println(((char) i) + " - " + (i - 96));
-
-        System.out.println("AxA12 -$ /{1fas!fR}".replaceAll("[^а-я ]", ""));
-
-        double[] doubles = charToVector('a');
-        char a = vectorToChar(doubles);
-
-        assertThat(a).isEqualTo('a');
-
-        doubles = charToVector(' ');
-        char space = vectorToChar(doubles);
-
-        assertThat(space).isEqualTo(' ');
-    }
-
-    private double[][] wordToVector(String word) {
-        char[] chars = word.toCharArray();
-        double[][] result = new double[chars.length + 1][];
-        for (int i = 0; i < chars.length; i++) {
-            result[i] = charToVector(chars[i]);
-        }
-        result[result.length - 1] = MLUtils.transformIntToClass(charNum, charNum); // space
-        return result;
     }
 }

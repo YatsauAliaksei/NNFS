@@ -36,9 +36,5 @@ public class LinearNeuronLayer implements NeuronLayer {
     public double[] activate(double[] rawResults) {
         return rawResults;
     }
-
-    @Override
-    public double[] enrichFeatureWithBias(double[] f) {
-        return new double[0];
-    }
 }
+

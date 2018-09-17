@@ -5,11 +5,12 @@ import org.ml4bull.nn.Neuron;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RMSPropGradientDescent extends GradientDescent {
 
-    private Map<Neuron, double[]> cacheMap = new HashMap<>();
-    private Map<Neuron, Double> biasCache = new HashMap<>();
+    private Map<Neuron, double[]> cacheMap = new ConcurrentHashMap<>();
+    private Map<Neuron, Double> biasCache = new ConcurrentHashMap<>();
     private double decay_rate = 9e-1;
     private double eps = 1e-8;
 

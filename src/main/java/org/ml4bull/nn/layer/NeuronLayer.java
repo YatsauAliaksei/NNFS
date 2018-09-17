@@ -18,13 +18,6 @@ public interface NeuronLayer {
 
     double[] activate(double[] rawResults);
 
-    default double[] enrichFeatureWithBias(double[] f) {
-        double[] b = new double[f.length + 1];
-        b[0] = 1;
-        System.arraycopy(f, 0, b, 1, f.length);
-        return b;
-    }
-
     default double[] getLayerBiases() {
         return getNeurons().stream().mapToDouble(Neuron::getBias).toArray();
     }

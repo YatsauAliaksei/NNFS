@@ -21,7 +21,7 @@ public class HiddenNeuronLayer implements NeuronLayer {
     protected ActivationFunction activationFunction;
     protected ThreadLocal<double[]> lastResult = new ThreadLocal<>();
     protected ThreadLocal<double[]> lastInput = new ThreadLocal<>();
-    private DropoutRegularization dropoutRegularization = new DropoutRegularization(0.05);
+    private DropoutRegularization dropoutRegularization = new DropoutRegularization(0.01);
 
     public HiddenNeuronLayer(int neuronsCount, ActivationFunction activationFunction) {
         this(neuronsCount, activationFunction, true);
@@ -92,11 +92,11 @@ public class HiddenNeuronLayer implements NeuronLayer {
         return mo.multiplySingleDim(thetaT, layerError);
     }
 
-    private double[][] createLayerWeightMatrix() {
+    protected double[][] createLayerWeightMatrix() {
         double[][] theta = new double[neurons.size()][];
 
         IntStream.range(0, neurons.size()).forEach(i ->
-            theta[i] = neurons.get(i).getWeights()
+                theta[i] = neurons.get(i).getWeights()
         );
         return theta;
     }

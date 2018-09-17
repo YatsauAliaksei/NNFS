@@ -12,6 +12,7 @@ public class OutputNeuronLayer extends HiddenNeuronLayer {
         isDropoutEnabled = false;
     }
 
+    // L2
     @Override
     public double[] backPropagation(double[] expected) { // In output layer error is simple expected value.
 //         calculate out error start point for back propagation.
