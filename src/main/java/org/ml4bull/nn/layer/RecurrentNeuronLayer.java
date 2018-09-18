@@ -22,24 +22,29 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
     private ThreadLocal<Memory<double[]>> featureMemory = new ThreadLocal<>();
     private ThreadLocal<Memory<double[]>> outMemory = new ThreadLocal<>();
     private ThreadLocal<Memory<double[]>> expectedMemory = new ThreadLocal<>();
-    private HiddenNeuronLayer historyLayer;
-    private HiddenNeuronLayer outLayer;
+    private HiddenNeuronMemoryLayer historyLayer;
+    private HiddenNeuronMemoryLayer outLayer;
     private final int memorySize;
 
     private DoubleAdder loss = new DoubleAdder();
     private AtomicLong counter = new AtomicLong();
+    private int inCounter;
+    private int batchSize;
 
     private static final int LOSS_BATCH_SIZE = 2000;
 
     /**
      * Simple recurrent neuron net layer.
      */
-    public RecurrentNeuronLayer(int hiddenLayerNeuronSize, int outLayerNeuronSize, int memorySize) {
+    public RecurrentNeuronLayer(int hiddenLayerNeuronSize, int outLayerNeuronSize, int memorySize, int batchSize) {
         super(hiddenLayerNeuronSize, new HyperbolicTangentFunction(), false, true);
-
         this.memorySize = memorySize;
-        historyLayer = new HiddenNeuronLayer(hiddenLayerNeuronSize, new LinearFunction(), true, false);
-        outLayer = new HiddenNeuronLayer(outLayerNeuronSize, new SoftmaxFunction(), true, true);
+        this.batchSize = batchSize;
+
+        int weightsMemorySize = memorySize < batchSize ? 1 : memorySize / batchSize;
+        weightsMemorySize += memorySize % batchSize == 0 ? 0 : 1;
+        historyLayer = new HiddenNeuronMemoryLayer(hiddenLayerNeuronSize, new LinearFunction(), true, weightsMemorySize, false);
+        outLayer = new HiddenNeuronMemoryLayer(outLayerNeuronSize, new SoftmaxFunction(), true, weightsMemorySize);
     }
 
     private void initThreadLocals(int memorySize) {
@@ -55,6 +60,7 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
 
     @Override
     public double[] forwardPropagation(double[] inValues) {
+        inCounter++;
         initThreadLocals(memorySize);
 
         featureMemory.get().add(inValues); // for bptt
@@ -94,6 +100,8 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
         int target = previousError.length - MLUtils.transformClassToInt(previousError);
         calculateLoss(target);
 
+        inCounter = inCounter > batchSize ? inCounter - inCounter / batchSize * batchSize : inCounter; // normalize if 'check' pass happened.
+
         int hsNeuronSize = neurons.size();
         int hsNeuronWeightSize = neurons.get(0).getWeights().length;
         double[] dhNext = new double[hsNeuronSize];
@@ -121,7 +129,8 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
             dWhy = mo.sum(dWhy, outLayer.calculateDeltaError(dY));
             dby = mo.sum(dby, outLayer.calculateBiasDeltaError(dY));
 
-            double[] dh = mo.sum(dhNext, outLayer.gradientVector(dY));
+            int wTime = (inCounter - i) > 0 ? 0 : 1 + (i - inCounter) / batchSize; // todo: check it
+            double[] dh = mo.sum(dhNext, outLayer.gradientVectorInTime(dY, wTime));
 
             // current layer dW
             double[] dhRaw = mo.scalarMultiply(dh, activationFunction.derivative(hiddenState));
@@ -134,7 +143,7 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
             dWhh = mo.sum(dWhh, historyLayer.calculateDeltaError(dhRaw));
             dbh = mo.sum(dbh, historyLayer.calculateBiasDeltaError(dhRaw)); // accumulate h bias
 
-            dhNext = historyLayer.gradientVector(dhRaw);
+            dhNext = historyLayer.gradientVectorInTime(dhRaw, wTime);
         }
 
         MLUtils.shrink(timeSize, dWhh, dWxh, dWhy);
@@ -180,5 +189,6 @@ public class RecurrentNeuronLayer extends HiddenNeuronLayer {
         historyLayer.optimizeWeights(optAlg);
         outLayer.optimizeWeights(optAlg);
         super.optimizeWeights(optAlg);
+        inCounter = 0;
     }
 }

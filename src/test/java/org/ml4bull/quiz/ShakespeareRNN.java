@@ -38,7 +38,7 @@ public class ShakespeareRNN {
                 .output(language.getCharNum())
                 .optAlg(optAlg).build();
 
-        mlp.addHiddenLayer(new RecurrentNeuronLayer(150, language.getCharNum(), 30));
+        mlp.addHiddenLayer(new RecurrentNeuronLayer(150, language.getCharNum(), 30, 10));
 
         DataSet trainDS = createDS();
         log.info("=============================================\n" +

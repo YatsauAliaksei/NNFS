@@ -116,6 +116,7 @@ public class LSTMNeuronLayer extends HiddenNeuronLayer {
         double[] dhNext = createMatrix(hMem.getLast().length);
         double[] dcNext = createMatrix(cMem.getLast().length);
 
+        counter = counter > batchSize ? counter - counter / batchSize * batchSize : counter; // normalize if 'check' pass happened.
         final int time = yMem.size();
         for (int i = 0; i < time; i++) {
             // y processing

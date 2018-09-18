@@ -85,10 +85,9 @@ public class MultiLayerPerceptron implements SupervisedNeuralNetwork {
         do {
             stopwatch.start();
             error = train(trainDS, false);
-            log.info("Epoch: {} | Error: {}", ++epoch, error);
-
             stopwatch.stop();
-            System.out.println("Time: " + stopwatch.toString());
+            log.info("Epoch: {}, Time: {} | Error: {}", ++epoch, stopwatch.toString(), error);
+
             stopwatch.reset();
             consumer.accept(error);
         } while (error > errorGoal);
