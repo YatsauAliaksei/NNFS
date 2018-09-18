@@ -27,13 +27,13 @@ public class Dl4jLstm {
 
     public static void main(String[] args) throws Exception {
         int lstmLayerSize = 200;                    //Number of units in each LSTM layer
-        int miniBatchSize = 32;                        //Size of mini batch to use when  training
+        int miniBatchSize = 20;                        //Size of mini batch to use when  training
         int exampleLength = 1000;                    //Length of each training example sequence to use. This could certainly be increased
         int tbpttLength = 50;                       //Length for truncated backpropagation through time. i.e., do parameter updates ever 50 characters
         int numEpochs = 1;                            //Total number of training epochs
         int generateSamplesEveryNMinibatches = 10;  //How frequently to generate samples from the network? 1000 characters / 50 tbptt length: 20 parameter updates per minibatch
         int nSamplesToGenerate = 4;                    //Number of samples to generate after each training epoch
-        int nCharactersToSample = 300;                //Length of each sample to generate
+        int nCharactersToSample = 500;                //Length of each sample to generate
         String generationInitialization = null;        //Optional character initialization; a random character is used if null
         // Above is Used to 'prime' the LSTM with a character sequence to continue/complete.
         // Initialization characters must all be in CharacterIterator.getMinimalCharacterSet() by default
@@ -51,12 +51,19 @@ public class Dl4jLstm {
                 .weightInit(WeightInit.XAVIER)
                 .updater(new RmsProp(0.1))
                 .list()
-                .layer(0, new LSTM.Builder().nIn(iter.inputColumns()).nOut(lstmLayerSize)
+                .layer(0, new LSTM.Builder()
+                        .nIn(iter.inputColumns())
+                        .nOut(lstmLayerSize)
                         .activation(Activation.TANH).build())
-                .layer(1, new LSTM.Builder().nIn(lstmLayerSize).nOut(lstmLayerSize)
+                .layer(1, new LSTM.Builder()
+                        .nIn(lstmLayerSize)
+                        .nOut(lstmLayerSize)
                         .activation(Activation.TANH).build())
-                .layer(2, new RnnOutputLayer.Builder(LossFunction.MCXENT).activation(Activation.SOFTMAX)        //MCXENT + softmax for classification
-                        .nIn(lstmLayerSize).nOut(nOut).build())
+                .layer(2, new RnnOutputLayer.Builder(LossFunction.MCXENT)
+                        .nIn(lstmLayerSize)
+                        .nOut(nOut)
+                        .activation(Activation.SOFTMAX).build()) //MCXENT + softmax for classification
+
                 .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(tbpttLength).tBPTTBackwardLength(tbpttLength)
                 .pretrain(false).backprop(true)
                 .build();
@@ -111,8 +118,10 @@ public class Dl4jLstm {
         //5.3MB file in UTF-8 Encoding, ~5.4 million characters
         //https://www.gutenberg.org/ebooks/100
         String url = "https://s3.amazonaws.com/dl4j-distribution/pg100.txt";
-        String tempDir = System.getProperty("java.io.tmpdir");
-        String fileLocation = tempDir + "/Shakespeare.txt";    //Storage location from downloaded file
+//        String tempDir = System.getProperty("java.io.tmpdir");
+        String tempDir = System.getProperty("user.home");
+//        String fileLocation = tempDir + "/Shakespeare.txt";    //Storage location from downloaded file
+        String fileLocation = tempDir + "/sherlock.txt";    //Storage location from downloaded file
         File f = new File(fileLocation);
         if (!f.exists()) {
             FileUtils.copyURLToFile(new URL(url), f);
